@@ -8,6 +8,21 @@ int MpixelScale;
 int MSH;
 int MSW;
 
+void setPS(int pS)
+{
+    MpixelScale = pS;
+}
+
+void setSH(int SH)
+{
+    MSH = SH;
+}
+
+void setSW(int SW)
+{
+    MSW = SW;
+}
+
 void setCol(int c)
 {
     int rgb[3];
@@ -109,10 +124,10 @@ void quads(int x1, int y1, int x2, int y2, int c)
     setCol(c);
 
     glBegin(GL_QUADS);
-    glVertex2i(x1 * pixelScale + 2, y1 * pixelScale + 2);
-    glVertex2i(x1 * pixelScale + 2, y2 * pixelScale + 2);
-    glVertex2i(x2 * pixelScale + 2, y2 * pixelScale + 2);
-    glVertex2i(x2 * pixelScale + 2, y1 * pixelScale + 2);
+    glVertex2i(x1 * MpixelScale + 2, y1 * MpixelScale + 2);
+    glVertex2i(x1 * MpixelScale + 2, y2 * MpixelScale + 2);
+    glVertex2i(x2 * MpixelScale + 2, y2 * MpixelScale + 2);
+    glVertex2i(x2 * MpixelScale + 2, y1 * MpixelScale + 2);
     glEnd();
 }
 
@@ -123,7 +138,7 @@ void clearBackground()
     {
         for (x = 0; x < MSW; x++)
         {
-            pixel(x, y, 8, pixelScale);
+            pixel(x, y, 8, MpixelScale);
         } // clear background color
     }
 }

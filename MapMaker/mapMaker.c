@@ -3,7 +3,7 @@
 #include <GL/glut.h>
 #include <stdbool.h>
 
-#include <MEng.h>
+#include "MEng.h"
 
 #define Framerate 120
 #define res 3                  // 0=160x120 1=360x240 4=640x480
@@ -20,10 +20,6 @@ typedef struct
     int fr1, fr2; // frame 1 frame 2, to create constant frame rate
 } time;
 time T;
-
-MpixelScale = pixelScale;
-MSH = SH;
-MSW = SW;
 
 typedef struct
 {
@@ -184,6 +180,10 @@ void init()
     U.Bcol = 10; // gray blue ish
     U.hold = false;
     U.PclkRadius = 2;
+
+    setPS(pixelScale);
+    setSH(SH);
+    setSW(SW);
 
     printf("Inicialized\n");
 }
