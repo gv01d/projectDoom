@@ -92,6 +92,12 @@ void setCol(int c)
         rgb[1] = 29;
         rgb[2] = 40;
     }
+    if (c == 11)
+    {
+        rgb[0] = 165;
+        rgb[1] = 48;
+        rgb[2] = 48;
+    } // red
 
     glColor3ub(rgb[0], rgb[1], rgb[2]);
 }

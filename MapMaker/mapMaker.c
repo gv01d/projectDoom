@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <GL/glut.h>
 #include <stdbool.h>
-
-#include "MEng.h"
+#include "character.h"
 
 #define Framerate 120
 #define res 3                  // 0=160x120 1=360x240 4=640x480
@@ -26,6 +25,7 @@ typedef struct
     int x, y;
     int cx, cy;
     bool click;
+    bool Rclick;
 } crossHair;
 crossHair P;
 
@@ -52,6 +52,18 @@ void mouseBtn(int button, int state, int x, int y)
             P.click = false;
         }
     }
+
+    if (button == GLUT_RIGHT_BUTTON)
+    {
+        if (state == GLUT_DOWN)
+        {
+            P.Rclick = true;
+        }
+        else
+        {
+            P.Rclick = false;
+        }
+    }
 }
 
 void crosshair()
@@ -76,9 +88,11 @@ typedef struct
     bool selected, Sslct;
     int PclkRadius;
     int OffsetX, OffsetY;
-
+    bool active;
 } UI;
 UI U;
+
+UI rC;
 
 bool UPressed;
 void UIfunc()
@@ -169,17 +183,124 @@ void UIfunc()
     pixel(x2, y2, 10, pixelScale);
 }
 
+// - // Map Structs \\ 
+
+typedef struct
+{
+    int x1, y1;
+    int x2, y2;
+    int col;
+} Wall;
+
+typedef struct
+{
+    Wall *walls;
+} Sector;
+
+Sector *Map;
+// - \\ Map Structs //
+
+// - // Button \\ 
+
+typedef struct button
+{
+    struct
+    {
+        int x;
+        int y;
+    } pos;
+    struct
+    {
+        int x;
+        int y;
+    } size;
+
+    bool clicked;
+    void (*Draw)(struct button *, int, int);
+} Button;
+
+bool rCPressed;
+Button CreateSector;
+void drawButton(Button *self, int col, int colB)
+{
+    int x1 = self->pos.x;
+    int y1 = self->pos.y;
+    int x2 = self->size.x + self->pos.x;
+    int y2 = self->size.y + self->pos.y;
+    quads(x1, y1, x2, y2, colB);
+
+    line(x1, y1, x1, y2, col, 1);
+    line(x1, y1, x2, y1, col, 1);
+    line(x2, y2, x1, y2, col, 1);
+    line(x2, y2, x2, y1, col, 1);
+}
+void makeBtn(Button *btn, int x, int y, int sX, int sY)
+{
+    btn->Draw = drawButton;
+    btn->pos.x = x;
+    btn->pos.y = y;
+    btn->size.x = sX;
+    btn->size.y = sY;
+}
+void rightClick()
+{
+    if (P.Rclick && !rCPressed)
+    {
+        rC.active = true;
+        rCPressed = true;
+        rC.posX = P.x + rC.OffsetX;
+        rC.posY = P.y + rC.OffsetY;
+    }
+    else if (!P.Rclick)
+    {
+        rCPressed = false;
+    }
+    int x1 = rC.posX;
+    int y1 = rC.posY;
+    int x2 = rC.posX + rC.sW;
+    int y2 = rC.posY + rC.sH;
+
+    if (P.click && !decBox(x1, y1, x2, y2, P.x, P.y))
+    {
+        rC.active = false;
+    }
+
+    if (rC.active)
+    {
+        quads(x1, y1, x2, y2, rC.Bcol);
+        CreateSector.pos.x = x1 + 1;
+        CreateSector.pos.y = y2 - 1 - CreateSector.size.y;
+        CreateSector.Draw(&CreateSector, rC.col, 11);
+        write("CREATE SECTOR", CreateSector.pos.x + 1, CreateSector.pos.y + 3, pixelScale, 1, rC.col, getFA());
+
+        line(x1, y1, x1, y2, rC.col, 1);
+        line(x1, y1, x2, y1, rC.col, 1);
+        line(x2, y2, x1, y2, rC.col, 1);
+        line(x2, y2, x2, y1, rC.col, 1);
+
+        // int xc = character('B', x1 + 5, y1 + 5, pixelScale, 2, 1, getFA());
+    }
+}
+
 void init()
 {
-    U.posX = 385;
-    U.posY = 10;
-    U.sW = 90;
-    U.sH = 255;
-    U.col = 9;   // white
-    U.Pcol = 0;  // yellow
-    U.Bcol = 10; // gray blue ish
-    U.hold = false;
-    U.PclkRadius = 2;
+    U.posX = 385;     //
+    U.posY = 10;      //
+    U.sW = 90;        //
+    U.sH = 255;       //
+    U.col = 9;        // white
+    U.Pcol = 0;       // yellow
+    U.Bcol = 10;      // gray blue ish
+    U.hold = false;   //
+    U.PclkRadius = 2; //
+
+    rC.col = 9;        //
+    rC.Pcol = 0;       //
+    rC.Bcol = 10;      //
+    rC.active = false; //
+    rC.sW = 30;        //
+    rC.sH = 30;        //
+    makeBtn(&CreateSector, 0, 0, 28, 5);
 
     setPS(pixelScale);
     setSH(SH);
@@ -202,6 +323,8 @@ void display()
         pixel(SW2, SH2, 0, pixelScale);
         pixel(SW2 / 2, SH2 / 2, 0, pixelScale);
         pixel(50, 200, 0, pixelScale);
+
+        rightClick();
 
         UIfunc();
 
