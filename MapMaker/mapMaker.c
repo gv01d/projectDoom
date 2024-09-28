@@ -3,6 +3,7 @@
 #include <GL/glut.h>
 #include <stdbool.h>
 #include "character.h"
+#include "Elements.h"
 
 #define Framerate 120
 #define res 3                  // 0=160x120 1=360x240 4=640x480
@@ -282,6 +283,20 @@ void rightClick()
     }
 }
 
+Container exampleBox;
+
+void drawForContainer(int *x, int *y, int n, Container *cont)
+{
+    if (cont->transform.size.type == RECT_TYPE)
+    {
+        quads(x[0], y[0], x[1], y[1], cont->col[0].id);
+        line(x[0], y[0], x[0], y[1], cont->col[1].id, 1);
+        line(x[0], y[0], x[1], y[0], cont->col[1].id, 1);
+        line(x[1], y[1], x[0], y[1], cont->col[1].id, 1);
+        line(x[1], y[1], x[1], y[0], cont->col[1].id, 1);
+    }
+}
+
 void init()
 {
     U.posX = 385;     //
@@ -306,6 +321,18 @@ void init()
     setSH(SH);
     setSW(SW);
 
+    exampleBox = *createContainer(drawForContainer);
+
+    exampleBox.info.ID = 0;
+    exampleBox.transform.pos.cartesian.x = 20;
+    exampleBox.transform.pos.cartesian.y = 20;
+    exampleBox.transform.pos.type = CARTESIAN_TYPE;
+    exampleBox.transform.size.rect.width = 100;
+    exampleBox.transform.size.rect.height = 100;
+    exampleBox.transform.size.type = RECT_TYPE;
+    exampleBox.col[0].setSelfID(&exampleBox.col[0], 9);
+    exampleBox.col[0].setSelfID(&exampleBox.col[1], 10);
+
     printf("Inicialized\n");
 }
 
@@ -327,6 +354,8 @@ void display()
         rightClick();
 
         UIfunc();
+
+        exampleBox.drawCall(&exampleBox);
 
         T.fr2 = T.fr1;
         glutSwapBuffers();

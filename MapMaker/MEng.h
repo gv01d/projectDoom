@@ -85,7 +85,7 @@ void setCol(int c)
         rgb[0] = 255;
         rgb[1] = 255;
         rgb[2] = 255;
-    }
+    } // white
     if (c == 10)
     {
         rgb[0] = 21;
