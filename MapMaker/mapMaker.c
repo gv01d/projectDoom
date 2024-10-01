@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <GL/glut.h>
 #include <stdbool.h>
-#include "character.h"
+#include "MEng.h"
 #include "Elements.h"
 
 #define Framerate 120
@@ -14,6 +14,8 @@
 #define pixelScale 12 / res    // OpenGL pixel scale
 #define GLSW (SW * pixelScale) // OpenGL window width
 #define GLSH (SH * pixelScale) // OpenGL window height
+
+int MPixelScale;
 
 typedef struct
 {
@@ -164,7 +166,7 @@ void UIfunc()
     {
         if (!UPressed)
         {
-            printf("< %d; %d : %d; %d >", x1, y1, x2 - x1, y2 - y1);
+            //printf("< %d; %d : %d; %d >", x1, y1, x2 - x1, y2 - y1);
             UPressed = true;
         }
     }
@@ -296,9 +298,28 @@ void drawForContainer(int *x, int *y, int n, Container *cont)
         line(x[1], y[1], x[1], y[0], cont->col[1].id, 1);
     }
 }
+void clearBackground()
+{
+    int sh = SH;
+    int sw = SW;
+    int x, y;
+    for (y = 0; y < sh; y++)
+    {
+        for (x = 0; x < sw; x++)
+        {
+            pixel(x, y, 8, MpixelScale);
+        } // clear background color
+    }
+}
 
 void init()
 {
+    setPS(pixelScale);
+    setSH(SH);
+    setSW(SW);
+
+    MpixelScale = pixelScale;
+
     U.posX = 385;     //
     U.posY = 10;      //
     U.sW = 90;        //
@@ -317,9 +338,6 @@ void init()
     rC.sH = 30;        //
     makeBtn(&CreateSector, 0, 0, 28, 5);
 
-    setPS(pixelScale);
-    setSH(SH);
-    setSW(SW);
 
     exampleBox = *createContainer(drawForContainer);
 
@@ -327,8 +345,8 @@ void init()
     exampleBox.transform.pos.cartesian.x = 20;
     exampleBox.transform.pos.cartesian.y = 20;
     exampleBox.transform.pos.type = CARTESIAN_TYPE;
-    exampleBox.transform.size.rect.width = 100;
-    exampleBox.transform.size.rect.height = 100;
+    exampleBox.transform.size.rect.width = 300;
+    exampleBox.transform.size.rect.height = 300;
     exampleBox.transform.size.type = RECT_TYPE;
     exampleBox.col[0].setSelfID(&exampleBox.col[0], 9);
     exampleBox.col[0].setSelfID(&exampleBox.col[1], 10);
@@ -338,7 +356,6 @@ void init()
 
 void display()
 {
-
     int x, y;
     if (T.fr1 - T.fr2 >= (1000 / Framerate)) // only draw 20 frames/second
     {

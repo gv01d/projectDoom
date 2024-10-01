@@ -3,11 +3,18 @@
 #include <math.h>
 #include <GL/glut.h>
 
+
+
+
 // <===================================================================================================================>
+
+//
 
 //  /=======================================\ 
 // <--------------- Atributes --------------->
 //  \=======================================/
+
+//
 
 // <===================================================================================================================>
 
@@ -215,9 +222,13 @@ Color *newColor() // Color constructor
 
 // <===================================================================================================================>
 
+//
+
 //  /=====================================\ 
 // <--------------- Modules --------------->
 //  \=====================================/
+
+//
 
 //  <===================================================================================================================>
 
@@ -291,9 +302,17 @@ Private_ContainerBox *newContainerBox() // new container box
     return box;
 }
 
+//  <===================================================================================================================>
+
+//
+
 //  /======================================\ 
 // <--------------- Definers --------------->
 //  \======================================/
+
+//
+
+//  <===================================================================================================================>
 
 #define PI 3.14159265
 #define MAX_ANGLES 360
@@ -326,8 +345,8 @@ void definePos(Position *pos, int *x, int *y)
 {
     if (pos->type == CARTESIAN_TYPE)
     {
-        x = &pos->cartesian.x;
-        y = &pos->cartesian.y;
+        *x = pos->cartesian.x;
+        *y = pos->cartesian.y;
     }
     else if (pos->type == POLAR_TYPE)
     {
@@ -354,9 +373,15 @@ void drawByType(Size size, int x1, int y1)
     }
 }
 
+//  <===================================================================================================================>
+
+//
+
 //  /======================================\ 
 // <--------------- Elements --------------->
 //  \======================================/
+
+//
 
 //  <===================================================================================================================>
 typedef struct Base // Define base
@@ -441,10 +466,11 @@ typedef struct Container
     void (*eraseSelf)(struct Container *);
     void (*drawCall)(struct Container *);
     void (*draw)(int *, int *, int, struct Container *);
+    bool dfExists;
     void (*drawFunc)();
     void *drawFuncArgs;
 } Container;
-void drawContainer(Container *container)
+void drawPrivateContainer(Container *container)
 {
     int *x;
     int *y;
@@ -477,7 +503,11 @@ void drawContainer(Container *container)
 
     container->draw(x, y, n, container);
 
-    container->drawFunc();
+    if (container->dfExists)
+    {
+        container->drawFunc();
+    }
+    
 
     // Draw container
 
@@ -504,7 +534,8 @@ Container *createContainer(void (*draw)(int *, int *, int, struct Container *))
         container->col[i] = *newColor();
     }
     container->draw = draw;
-    container->drawCall = drawContainer;
+    container->drawCall = drawPrivateContainer;
     container->eraseSelf = eraseContainer;
+    container->dfExists = false;
     return container;
 }
