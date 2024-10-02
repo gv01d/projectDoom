@@ -4,6 +4,11 @@
 
     Definers 
             Functions and definitions
+
+            Global Functions
+
+            Vector2 Struct
+                : x , y
     Atributes
 
         Position Type
@@ -15,10 +20,10 @@
         Color Type
         Color [ Include ColorType ]
 
+        Info
+
     Modules
             Private Structs
-
-        Info
 
         Transform [ Include Position , Size ] *
 
@@ -78,7 +83,7 @@
     [Private] Set (St)
             : Sets the struct
 
-    <Not Implemented> [Private] get (Gt)
+    <Idea> [Private] get (Gt)
             : Returns the value of the struct
     
     <Not Implemented> Save

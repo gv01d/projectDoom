@@ -222,16 +222,6 @@ Color *newColor() // Color constructor
 
 // <===================================================================================================================>
 
-//
-
-//  /=====================================\ 
-// <--------------- Modules --------------->
-//  \=====================================/
-
-//
-
-//  <===================================================================================================================>
-
 typedef struct Info
 {
     int ID;
@@ -251,6 +241,15 @@ Private_Info *newInfo()
     info->eraseSelf = eraseInfo;
     return info;
 }
+// <===================================================================================================================>
+
+//
+
+//  /=====================================\ 
+// <--------------- Modules --------------->
+//  \=====================================/
+
+//
 
 //  <===================================================================================================================>
 
@@ -262,16 +261,16 @@ typedef struct Transform // Define transform
     // functions
     void (*eraseSelf)(struct Transform *);
 
-} Private_Transform;
-void eraseTransform(Private_Transform *transform) // Erase transform
+} _Private_Transform;
+void eraseTransform(_Private_Transform *transform) // Erase transform
 {
     transform->pos.eraseSelf(&transform->pos);
     transform->size.eraseSelf(&transform->size);
     free(transform);
 }
-Private_Transform *newTransform() // new transform
+_Private_Transform *newTransform() // new transform
 {
-    Private_Transform *transform = (Private_Transform *)malloc(sizeof(Private_Transform));
+    _Private_Transform *transform = (_Private_Transform *)malloc(sizeof(_Private_Transform));
     transform->pos = *newPosition();
     transform->size = *newSize();
     transform->eraseSelf = eraseTransform;
@@ -282,21 +281,21 @@ Private_Transform *newTransform() // new transform
 
 typedef struct ContainerBox
 {
-    Private_Transform transform;
+    _Private_Transform transform;
     Color col;
 
     // functions
     void (*eraseSelf)(struct ContainerBox *);
-} Private_ContainerBox;
-void eraseContainerBox(Private_ContainerBox *box) // Erase container box
+} _Private_ContainerBox;
+void eraseContainerBox(_Private_ContainerBox *box) // Erase container box
 {
     box->transform.eraseSelf(&box->transform);
     box->col.eraseSelf(&box->col);
     free(box);
 }
-Private_ContainerBox *newContainerBox() // new container box
+_Private_ContainerBox *newContainerBox() // new container box
 {
-    Private_ContainerBox *box = (Private_ContainerBox *)malloc(sizeof(Private_ContainerBox));
+    _Private_ContainerBox *box = (_Private_ContainerBox *)malloc(sizeof(_Private_ContainerBox));
     box->transform = *newTransform();
     box->col = *newColor();
     return box;
@@ -316,6 +315,22 @@ Private_ContainerBox *newContainerBox() // new container box
 
 #define PI 3.14159265
 #define MAX_ANGLES 360
+
+typedef struct{
+    int x,y;
+} Vector2;
+
+struct GlobalFunctions{
+
+    bool dwPolyExists;
+
+    bool dwPolyOExists;
+
+    void(*DrawPolygon)(struct Vector2* , int , struct Color);
+
+    void(*DrawPolygonOutline)(struct Vector2* , int , struct Color);
+
+}vuie_GlobalFunctions;
 
 // Tabelas para armazenar senos e cossenos
 float sin_table[MAX_ANGLES];
@@ -458,7 +473,7 @@ Base *newBase()
 typedef struct Container
 {
     Private_Info info;
-    Private_Transform transform;
+    _Private_Transform transform;
     Color col[20];
 
     // functions
