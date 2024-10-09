@@ -166,7 +166,7 @@ void UIfunc()
     {
         if (!UPressed)
         {
-            //printf("< %d; %d : %d; %d >", x1, y1, x2 - x1, y2 - y1);
+            // printf("< %d; %d : %d; %d >", x1, y1, x2 - x1, y2 - y1);
             UPressed = true;
         }
     }
@@ -338,7 +338,6 @@ void init()
     rC.sH = 30;        //
     makeBtn(&CreateSector, 0, 0, 28, 5);
 
-
     exampleBox = *createContainer(drawForContainer);
 
     exampleBox.info.ID = 0;
@@ -359,18 +358,22 @@ void display()
     int x, y;
     if (T.fr1 - T.fr2 >= (1000 / Framerate)) // only draw 20 frames/second
     {
-        clearBackground();
+        glClear(GL_COLOR_BUFFER_BIT);
         // draw3D();
+        /*
         line(SW2 / 2, SH2 / 2, SW2, SH2, 9, 1);
         line(50, 200, SW2 / 2, SH2 / 2, 9, 1);
+        */
 
-        pixel(SW2, SH2, 0, pixelScale);
-        pixel(SW2 / 2, SH2 / 2, 0, pixelScale);
-        pixel(50, 200, 0, pixelScale);
+        /*
+                pixel(SW2, SH2, 0, pixelScale);
+                pixel(SW2 / 2, SH2 / 2, 0, pixelScale);
+                pixel(50, 200, 0, pixelScale);
+        */
 
         rightClick();
 
-        UIfunc();
+        // UIfunc();
 
         exampleBox.drawCall(&exampleBox);
 
