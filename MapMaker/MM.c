@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-// <' Global Variables '>
+#include "Elements.h"
 
-// Debug
+// <<<<<<<<<<' Debug '>>>>>>>>>>
 
 #define DEBUG 1
 
@@ -35,6 +35,10 @@
 #if !defined(DEBUG_PRINT_3)
 #define DEBUG_PRINT_3(fmt, args...) /* Don't do anything in release builds */
 #endif
+
+// <.------------------.>
+// #---------------------------------------------------------------------------------------------------------------#
+// <<<<<<<<<<' Global Variables '>>>>>>>>>>
 
 // Window variables
 struct
@@ -113,18 +117,22 @@ void startMouse()
 
 // <.------------------.>
 // #---------------------------------------------------------------------------------------------------------------#
-// <' Inicialization '>
+// <<<<<<<<<<' Inicialization '>>>>>>>>>>
+
+void UIInit();
 
 void init()
 {
     glClearColor(0.0, 0.0, 0.0, 0.0); // Set the background color to black
     startWindow("Map Maker");
     startMouse();
+
+    UIInit();
 }
 
 // <.----------------.>
 // #---------------------------------------------------------------------------------------------------------------#
-// Mouse motion callback function
+// <<<<<<<<<<' Input '>>>>>>>>>>
 
 void mouseMotion(int x, int y)
 {
@@ -149,23 +157,43 @@ void idle()
     glutPostRedisplay(); // Request a redraw
 }
 
+// <.----------------.>
+// #---------------------------------------------------------------------------------------------------------------#
+// <<<<<<<<<<' UI '>>>>>>>>>>
+
+void UIInit()
+{
+    Container *test1 = createContainer(NULL); // TODO: Create a draw function or define how to handle draw (VUIE.md:Funtions:DrawSelf)
+}
+
+void UI()
+{
+}
+
 // <.-----------------.>
 // #---------------------------------------------------------------------------------------------------------------#
-// <' Display Funtion '>
+// <<<<<<<<<<' Display Funtion '>>>>>>>>>>
 
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT); // Clear the screen
 
+    UI();
+
+    /*
     // Draw a point at the mouse position
     glColor3f(1.0, 0.0, 0.0); // Set the color to red
     glBegin(GL_POINTS);
     glVertex2f(mouse.pos.x, mouse.pos.y);
     glEnd();
+    */
 
     glutSwapBuffers(); // Swap the buffers to display the scene
 }
+
 // <.----------------.>
+// #---------------------------------------------------------------------------------------------------------------#
+// <<<<<<<<<<' Main '>>>>>>>>>>
 
 int main(int argc, char *argv[])
 {
