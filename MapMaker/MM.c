@@ -120,7 +120,6 @@ void init()
     glClearColor(0.0, 0.0, 0.0, 0.0); // Set the background color to black
     startWindow("Map Maker");
     startMouse();
-    // mouse
 }
 
 // <.----------------.>
