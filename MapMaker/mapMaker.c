@@ -3,7 +3,7 @@
 #include <GL/glut.h>
 #include <stdbool.h>
 #include "MEng.h"
-#include "Elements.h"
+#include "VUIE/*.h"
 
 #define Framerate 120
 #define res 3                  // 0=160x120 1=360x240 4=640x480

@@ -109,7 +109,7 @@
         | < Draw Rect
         | < Draw Circle
         | < Draw Polygon
-        - >> DrawPolygon (Points[] , Amount , InternalColor) & DrawPolygonBorder (Points[] , Amount , BorderColor)
+        - >> DrawPolygon (Points[] , Amount , InternalColor) & DrawPolygonBorder (Points[] , Amount , BorderColor) >
 
     <Not Implemented> DrawText (Dwt)
             : Draws the text inside
