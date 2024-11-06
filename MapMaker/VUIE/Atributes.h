@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <GL/glut.h>
+
 // <===================================================================================================================>
 
 //
@@ -20,9 +21,59 @@
 
 //
 
-typedef struct Element_Base Base;
+#include "Modules/modules.h"
+typedef struct Child
+{
+    enum elementType type;
+    union
+    {
+        Base base;
+        Container container;
+    };
 
-typedef struct Element_Container Container;
+} Child;
+
+Child *newChild(enum elementType type, void *element)
+{
+    Child *child = (Child *)malloc(sizeof(Child));
+    child->type = type;
+    if (type == BASE)
+    {
+        child->base = *(Base *)element;
+    }
+    else if (type == CONTAINER)
+    {
+        child->container = *(Container *)element;
+    }
+    return child;
+}
+
+int getChildID(Child *child)
+{
+    switch (child->type)
+    {
+    case BASE:
+        return child->base.info.ID;
+        break;
+    case CONTAINER:
+        return child->container.info.ID;
+        break;
+    default:
+        break;
+    }
+}
+void freeChild(Child *child)
+{
+    switch (child->type)
+    {
+    case CONTAINER:
+        child->container.free(&child->container);
+        break;
+
+    default:
+        break;
+    }
+}
 
 // <===================================================================================================================>
 
@@ -288,166 +339,6 @@ void copyInfo(Private_Info *info, Private_Info *copy)
 //
 
 //
-enum elementType
-{
-    BASE,     // 0
-    CONTAINER // 1
-};
-
-typedef struct Child
-{
-    enum elementType type;
-    union
-    {
-        Base base;
-        Container container;
-    };
-
-} Child;
-
-Child *newChild(enum elementType type, void *element)
-{
-    Child *child = (Child *)malloc(sizeof(Child));
-    child->type = type;
-    if (type == BASE)
-    {
-        child->base = *(Base *)element;
-    }
-    else if (type == CONTAINER)
-    {
-        child->container = *(Container *)element;
-    }
-    return child;
-}
-
-// <===================================================================================================================>
-
-//
-
-//
-
-//
-enum ChildDataStructureType
-{
-    ARRAY_TYPE, // 0
-    LIST_TYPE   // 1
-};
-
-// TODO : Add other child data structures
-typedef struct ChildArray_DataStructure
-{
-    int childAmount;
-
-    Child **child;
-    int *childID;
-
-} ChildArray;
-
-void ChildArray_addChild(ChildArray *childArray, Child *child)
-{
-    childArray->childAmount++;
-    childArray->child = (Child *)realloc(childArray->child, childArray->childAmount * sizeof(Child));
-    childArray->child[childArray->childAmount - 1] = child;
-}
-
-void ChildArray_removeChild(ChildArray *childArray, int index)
-{
-    if (index < 0 || index >= childArray->childAmount)
-    {
-        printf("<WARNING> : Index out of bounds on removing child from childArray\n");
-        return;
-    }
-
-    for (int i = index; i < childArray->childAmount - 1; i++)
-    {
-        childArray->child[i] = childArray->child[i + 1];
-    }
-
-    childArray->childAmount--;
-    childArray->child = (Child *)realloc(childArray->child, childArray->childAmount * sizeof(Child));
-    if (childArray->child == NULL && childArray->childAmount > 0)
-    {
-        printf("<WARNING> : ChildArray is NULL and amount is greater than 0\n");
-        return;
-    }
-}
-void ChildArray_removeChildbyID(ChildArray *childArray, int ID)
-{
-    for (int i = 0; i < childArray->childAmount; i++)
-    {
-        if (childArray->childID[i] == ID)
-        {
-            removeChild(childArray, i);
-            return;
-        }
-    }
-}
-
-typedef struct ChildDataStructure
-{
-    enum ChildDataStructureType type;
-
-    union
-    {
-        ChildArray array;
-    };
-
-} ChildDataStructure;
-void addChild(ChildDataStructure *childDataStructure, Child *child)
-{
-    if (childDataStructure->type == ARRAY_TYPE)
-    {
-        ChildArray_addChild(&childDataStructure->array, child);
-    }
-}
-void removeChild(ChildDataStructure *childDataStructure, int index)
-{
-    if (childDataStructure->type == ARRAY_TYPE)
-    {
-        ChildArray_removeChild(&childDataStructure->array, index);
-    }
-}
-void removeChildbyID(ChildDataStructure *childDataStructure, int ID)
-{
-    if (childDataStructure->type == ARRAY_TYPE)
-    {
-        ChildArray_removeChildbyID(&childDataStructure->array, ID);
-    }
-}
-void *getChild(ChildDataStructure *childDataStructure, int index)
-{
-    if (childDataStructure->type == ARRAY_TYPE)
-    {
-        if (index < 0 || index >= childDataStructure->array.childAmount)
-        {
-            printf("<WARNING> : Index out of bounds on getting child from childArray\n");
-            return NULL;
-        }
-
-        return childDataStructure->array.child[index];
-    }
-}
-void *getChildbyID(ChildDataStructure *childDataStructure, int ID)
-{
-    if (childDataStructure->type == ARRAY_TYPE)
-    {
-        for (int i = 0; i < childDataStructure->array.childAmount; i++)
-        {
-            if (childDataStructure->array.childID[i] == ID)
-            {
-                return childDataStructure->array.child[i];
-            }
-        }
-    }
-    return NULL;
-}
-void freeChildDataStructure(ChildDataStructure *childDataStructure)
-{
-    if (childDataStructure->type == ARRAY_TYPE)
-    {
-        childDataStructure->array.freeChild(&childDataStructure->array);
-    }
-}
 
 //  <===================================================================================================================>
 

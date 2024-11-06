@@ -1,4 +1,6 @@
+#include "../Render/Draw.h"
 #include "Module_Transform.h"
+#include "ChildDataStructure/ChildStructure.h"
 
 struct Element_Container
 {
@@ -153,7 +155,7 @@ void makeContainer(Container *container, int ID)
     container->info.ID = ID;
 
     // Childs
-    container->childAmount = 0;
+    container->childDataStructure = 0;
     container
 
     // Points & Outline
@@ -162,7 +164,6 @@ void makeContainer(Container *container, int ID)
 Container *createContainer(void (*draw)(int *, int *, int, struct Container *), int ID)
 {
     Container *container = (Container *)malloc(sizeof(Container));
-    container->childAmount = 0;
 
     // Points & Outline
     container->pointCount = 0;
