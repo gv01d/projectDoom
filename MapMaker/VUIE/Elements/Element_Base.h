@@ -3,7 +3,9 @@
 struct Element_Base // Define base
 {
     Private_Info info;
+
     Position pos;
+
     Size size;
 
     // functions

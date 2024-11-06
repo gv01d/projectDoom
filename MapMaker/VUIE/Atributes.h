@@ -3,6 +3,10 @@
 #include <math.h>
 #include <GL/glut.h>
 
+//
+
+#include "Elements/elements.h"
+
 // <===================================================================================================================>
 
 //
@@ -21,8 +25,9 @@
 
 //
 
-#include "Modules/modules.h"
-typedef struct Child
+int GlobalNextID = 0;
+
+typedef struct Node
 {
     enum elementType type;
     union
@@ -31,45 +36,72 @@ typedef struct Child
         Container container;
     };
 
-} Child;
+} Node;
 
-Child *newChild(enum elementType type, void *element)
+Node *newNode(enum elementType type, void *element)
 {
-    Child *child = (Child *)malloc(sizeof(Child));
-    child->type = type;
+    Node *node = (Node *)malloc(sizeof(Node));
+    node->type = type;
     if (type == BASE)
     {
-        child->base = *(Base *)element;
+        node->base = *(Base *)element;
     }
     else if (type == CONTAINER)
     {
-        child->container = *(Container *)element;
+        node->container = *(Container *)element;
     }
-    return child;
+    return node;
 }
 
-int getChildID(Child *child)
+int getNodeID(Node *Node)
 {
-    switch (child->type)
+    switch (Node->type)
     {
     case BASE:
-        return child->base.info.ID;
+        return Node->base.info.ID;
         break;
     case CONTAINER:
-        return child->container.info.ID;
+        return Node->container.info.ID;
         break;
     default:
         break;
     }
 }
-void freeChild(Child *child)
+void freeNode(Node *node)
 {
-    switch (child->type)
+    switch (node->type)
     {
     case CONTAINER:
-        child->container.free(&child->container);
+        node->container.free(&node->container);
         break;
 
+    default:
+        break;
+    }
+}
+
+void callDraw(Node *node)
+{
+    switch (node->type)
+    {
+    case BASE:
+        break;
+    case CONTAINER:
+        node->container._draw(&node->container);
+        break;
+    default:
+        break;
+    }
+}
+void callProcess(Node *node)
+{
+    switch (node->type)
+    {
+    case BASE:
+        break;
+    case CONTAINER:
+        node->container._process(&node->container);
+        break;
     default:
         break;
     }
@@ -159,6 +191,8 @@ void copyPosition(Position *pos, Position *copy) // Copy position
     }
 }
 
+Position PRIVATE_DEFAULT_POSITION = {CARTESIAN_TYPE, 0, 0};
+
 //  <===================================================================================================================>
 
 //
@@ -218,6 +252,8 @@ void copySize(Size *size, Size *copy) // Copy size
         size->circ.points = copy->circ.points;
     }
 }
+
+Size PRIVATE_DEFAULT_SIZE = {RECT_TYPE, 0, 0};
 
 // <===================================================================================================================>
 
@@ -355,7 +391,7 @@ void copyInfo(Private_Info *info, Private_Info *copy)
 #define PI 3.14159265
 #define MAX_ANGLES 360
 
-typedef struct
+typedef struct Vector2
 {
     int x, y;
 } Vector2;

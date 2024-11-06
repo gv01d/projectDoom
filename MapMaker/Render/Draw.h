@@ -7,10 +7,10 @@ void Draw_SetPixelScale(int pS)
     pixelScale = pS;
 }
 
-void pixel(int x, int y, Color col, int w) // draw a pixel at x/y with rgb
+void Draw_pixel(int x, int y, Color *color, int w) // draw a pixel at x/y with rgb
 {
 
-    setColor(col);
+    setColor(color);
 
     glPointSize(w);
     glBegin(GL_POINTS);
@@ -18,10 +18,10 @@ void pixel(int x, int y, Color col, int w) // draw a pixel at x/y with rgb
     glEnd();
 }
 
-void line(int x1, int y1, int x2, int y2, Color c, int w)
+void Draw_line(int x1, int y1, int x2, int y2, Color *color, int w)
 {
 
-    setColor(c);
+    setColor(color);
 
     glLineWidth(w);
     glBegin(GL_LINES);
@@ -30,9 +30,9 @@ void line(int x1, int y1, int x2, int y2, Color c, int w)
     glEnd();
 }
 
-void quads(int x1, int y1, int x2, int y2, Color c)
+void Draw_quads(int x1, int y1, int x2, int y2, Color *color)
 {
-    setColor(c);
+    setColor(color);
 
     glBegin(GL_QUADS);
     glVertex2i(x1 * pixelScale + 2, y1 * pixelScale + 2);
@@ -50,9 +50,9 @@ int dist(int x1, int y1, int x2, int y2)
 
 // POLYGON
 
-void Polygon(Vector2 *points, int amount, Color col)
+void Draw_Polygon(Vector2 *points, int amount, Color *color)
 {
-    setColor(col);
+    setColor(color);
 
     glBegin(GL_POLYGON);
     for (size_t i = 0; i < amount; i++)
@@ -61,15 +61,26 @@ void Polygon(Vector2 *points, int amount, Color col)
     }
     glEnd();
 }
-
-void PolygonOutline(Vector2 *points, int amount, Color col)
+/*
+    TODO : Add outline width
+*/
+void Draw_PolygonOutline(Vector2 *points, int amount, Color *color, int width)
 {
-    setColor(col);
+    if (width < 1)
+    {
+        return;
+    }
 
+    setColor(color);
+
+    // get width
+    int glWidth = glGet(GL_LINE_WIDTH);
+    glLineWidth(width * glWidth);
     glBegin(GL_LINE_LOOP);
     for (size_t i = 0; i < amount; i++)
     {
         glVertex2i(points[i].x * pixelScale + 2, points[i].y * pixelScale + 2);
     }
     glEnd();
+    glLineWidth(glWidth);
 }
