@@ -287,17 +287,6 @@ void rightClick()
 
 Container exampleBox;
 
-void drawForContainer(int *x, int *y, int n, Container *cont)
-{
-    if (cont->transform.size.type == RECT_TYPE)
-    {
-        quads(x[0], y[0], x[1], y[1], cont->col[0].id);
-        line(x[0], y[0], x[0], y[1], cont->col[1].id, 1);
-        line(x[0], y[0], x[1], y[0], cont->col[1].id, 1);
-        line(x[1], y[1], x[0], y[1], cont->col[1].id, 1);
-        line(x[1], y[1], x[1], y[0], cont->col[1].id, 1);
-    }
-}
 void clearBackground()
 {
     int sh = SH;
@@ -338,17 +327,15 @@ void init()
     rC.sH = 30;        //
     makeBtn(&CreateSector, 0, 0, 28, 5);
 
-    exampleBox = *createContainer(drawForContainer);
+    make_VUID_Container(&exampleBox);
 
-    exampleBox.info.ID = 0;
     exampleBox.transform.pos.cartesian.x = 20;
     exampleBox.transform.pos.cartesian.y = 20;
     exampleBox.transform.pos.type = CARTESIAN_TYPE;
     exampleBox.transform.size.rect.width = 300;
     exampleBox.transform.size.rect.height = 300;
     exampleBox.transform.size.type = RECT_TYPE;
-    exampleBox.col[0].setSelfID(&exampleBox.col[0], 9);
-    exampleBox.col[0].setSelfID(&exampleBox.col[1], 10);
+    exampleBox.draw = true;
 
     printf("Inicialized\n");
 }
@@ -374,8 +361,10 @@ void display()
         rightClick();
 
         // UIfunc();
-
-        exampleBox.drawCall(&exampleBox);
+        if (exampleBox.draw)
+        {
+            exampleBox._draw(&exampleBox);
+        }
 
         T.fr2 = T.fr1;
         glutSwapBuffers();
