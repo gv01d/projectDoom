@@ -24,7 +24,8 @@ void setSW(int SW)
     MSW = SW;
 }
 
-int getPS(){
+int getPS()
+{
     return MpixelScale;
 }
 
@@ -105,47 +106,6 @@ void setCol(int c)
     } // red
 
     glColor3ub(rgb[0], rgb[1], rgb[2]);
-}
-
-void pixel(int x, int y, int c, int w) // draw a pixel at x/y with rgb
-{
-
-    setCol(c);
-
-    glPointSize(w);
-    glBegin(GL_POINTS);
-    glVertex2i(x * MpixelScale + 2, y * MpixelScale + 2);
-    glEnd();
-}
-
-void line(int x1, int y1, int x2, int y2, int c, int w)
-{
-
-    setCol(c);
-
-    glLineWidth(w);
-    glBegin(GL_LINES);
-    glVertex2i(x1 * MpixelScale + 2, y1 * MpixelScale + 2);
-    glVertex2i(x2 * MpixelScale + 2, y2 * MpixelScale + 2);
-    glEnd();
-}
-
-void quads(int x1, int y1, int x2, int y2, int c)
-{
-    setCol(c);
-
-    glBegin(GL_QUADS);
-    glVertex2i(x1 * MpixelScale + 2, y1 * MpixelScale + 2);
-    glVertex2i(x1 * MpixelScale + 2, y2 * MpixelScale + 2);
-    glVertex2i(x2 * MpixelScale + 2, y2 * MpixelScale + 2);
-    glVertex2i(x2 * MpixelScale + 2, y1 * MpixelScale + 2);
-    glEnd();
-}
-
-int dist(int x1, int y1, int x2, int y2)
-{
-    int distance = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-    return distance;
 }
 
 bool decBox(int x1, int y1, int x2, int y2, int px, int py)
@@ -398,8 +358,8 @@ int character(char c, int x, int y, int pScale, int pSize, int col, int *font)
     int xS = font[0];
     int S = font[0] * font[1];
     int p = ((c - 65) * S) + 2;
-    //printf("(%d)-\n", p);
-    //printf("ret");
+    // printf("(%d)-\n", p);
+    // printf("ret");
 
     if (c == ' ')
     {
@@ -411,13 +371,13 @@ int character(char c, int x, int y, int pScale, int pSize, int col, int *font)
     glBegin(GL_POINTS);
     for (int i = 0; i < S; i++)
     {
-        //printf("%d,", font[p + i]);
+        // printf("%d,", font[p + i]);
         if (font[p + i] == 1)
         {
             glVertex2i(x * MpixelScale + (i % xS) * pSize, y * MpixelScale - (i / xS) * pSize);
         }
     }
-    //printf("\n");
+    // printf("\n");
     /*
     glVertex2i(x * MpixelScale + 2, y * MpixelScale + 2);
     glVertex2i(x * MpixelScale + 2, y * MpixelScale + 4);

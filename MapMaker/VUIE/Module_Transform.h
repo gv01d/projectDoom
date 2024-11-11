@@ -1,4 +1,4 @@
-#include "Atributes.h"
+#include "../Render/Draw.h"
 
 typedef struct Transform // Define transform
 {
@@ -8,6 +8,12 @@ typedef struct Transform // Define transform
 } _Private_Transform;
 void setTransform(_Private_Transform *transform, Position *pos, Size *size) // Set transform
 {
-    transform->pos = pos;
-    transform->size = size;
+    copyPosition(&transform->pos, pos);
+    copySize(&transform->size, size);
+}
+
+void copyTransform(_Private_Transform *transform, _Private_Transform *copy) // Copy transform
+{
+    copyPosition(&transform->pos, &copy->pos);
+    copySize(&transform->size, &copy->size);
 }

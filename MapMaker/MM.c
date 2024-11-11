@@ -1,10 +1,7 @@
-#include <GL/glut.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include "Elements.h"
+#include "VUIE/vuie.h"
 
 // <<<<<<<<<<' Debug '>>>>>>>>>>
 
@@ -116,18 +113,105 @@ void startMouse()
 }
 
 // <.------------------.>
+
+void setColor(Color *col)
+{
+    if (col->type == ID_TYPE)
+    {
+        if (col->id == 0)
+        {
+            glColor3f(1.0, 1.0, 0.0);
+        } // Yellow
+        if (col->id == 1)
+        {
+            glColor3f(0.63, 0.63, 0.0);
+        } // Yellow darker
+        if (col->id == 2)
+        {
+            glColor3f(0.0, 1.0, 0.0);
+        } // Green
+        if (col->id == 3)
+        {
+            glColor3f(0.0, 0.63, 0.0);
+        } // Green darker
+        if (col->id == 4)
+        {
+            glColor3f(0.0, 1.0, 1.0);
+        } // Cyan
+        if (col->id == 5)
+        {
+            glColor3f(0.0, 0.63, 0.63);
+        } // Cyan darker
+        if (col->id == 6)
+        {
+            glColor3f(0.0, 0.0, 1.0);
+        } // Blue
+        if (col->id == 7)
+        {
+            glColor3f(0.0, 0.0, 0.63);
+        } // Blue darker
+        if (col->id == 8)
+        {
+            glColor3f(1.0, 0.0, 1.0);
+        } // Magenta
+        if (col->id == 9)
+        {
+            glColor3f(0.63, 0.0, 0.63);
+        } // Magenta darker
+        if (col->id == 10)
+        {
+            glColor3f(1.0, 0.0, 0.0);
+        } // Red
+        if (col->id == 11)
+        {
+            glColor3f(0.63, 0.0, 0.0);
+        } // Red darker
+        if (col->id == 12)
+        {
+            glColor3f(1.0, 1.0, 1.0);
+        } // White
+    }
+    else if (col->type == RGB_TYPE)
+    {
+        glColor3f(col->rgb.r, col->rgb.g, col->rgb.b);
+    }
+    else if (col->type == HSV_TYPE)
+    {
+        glColor3f(col->hsv.h, col->hsv.s, col->hsv.v);
+    }
+}
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' Inicialization '>>>>>>>>>>
 
-void UIInit();
+Container exampleBox;
+
+void containerInit()
+{
+    printf("Inicializing Container...\n");
+    make_VUIE_Container(&exampleBox);
+
+    printf("Inicializing Container Values...\n");
+    exampleBox.transform.pos.cartesian.x = 20;
+    exampleBox.transform.pos.cartesian.y = 20;
+    exampleBox.transform.pos.type = CARTESIAN_TYPE;
+
+    exampleBox.transform.size.rect.width = 300;
+    exampleBox.transform.size.rect.height = 300;
+    exampleBox.transform.size.type = RECT_TYPE;
+
+    exampleBox.draw = true;
+    exampleBox.drawSelf = true;
+}
 
 void init()
 {
-    glClearColor(0.0, 0.0, 0.0, 0.0); // Set the background color to black
+    printf("Inicialized\n");
     startWindow("Map Maker");
     startMouse();
+    glClearColor(0.0, 0.0, 0.0, 0.0); // Set the background color to black
 
-    UIInit();
+    containerInit();
+    printf("Container Inicialized Succesfully!\n");
 }
 
 // <.----------------.>
@@ -161,15 +245,6 @@ void idle()
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' UI '>>>>>>>>>>
 
-void UIInit()
-{
-    Container *test1 = createContainer(NULL); // TODO: Create a draw function or define how to handle draw (VUIE.md:Funtions:DrawSelf)
-}
-
-void UI()
-{
-}
-
 // <.-----------------.>
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' Display Funtion '>>>>>>>>>>
@@ -178,15 +253,19 @@ void display()
 {
     glClear(GL_COLOR_BUFFER_BIT); // Clear the screen
 
-    UI();
+    // Draw the container
+    printf("Container.draw = %s\n", exampleBox.draw ? "true" : "false");
+    if (exampleBox.draw)
+    {
+        exampleBox._draw(&exampleBox);
+    }
 
-    /*
     // Draw a point at the mouse position
-    glColor3f(1.0, 0.0, 0.0); // Set the color to red
+    setColor(RGBColor(1.0, 0.0, 0.0));
+    // glColor3f(1.0, 0.0, 0.0); // Set the color to red
     glBegin(GL_POINTS);
     glVertex2f(mouse.pos.x, mouse.pos.y);
     glEnd();
-    */
 
     glutSwapBuffers(); // Swap the buffers to display the scene
 }
@@ -197,6 +276,9 @@ void display()
 
 int main(int argc, char *argv[])
 {
+
+    printf("Hello, World!\n");
+
     init();
     DEBUG_PRINT("Debugging is enabled.\n");
     DEBUG_PRINT("Debug level: %d", (int)DEBUG);

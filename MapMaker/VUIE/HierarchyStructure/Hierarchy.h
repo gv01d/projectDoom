@@ -22,6 +22,9 @@
             void (*free)(struct Hierarchy *nodeDataStructure, int index);
             // Draw
             void (*callDraw) (struct Hierarchy *nodeDataStructure);
+            void (*callDrawAboveZ) (struct Hierarchy *nodeDataStructure, int Z);
+            void (*callDrawZ) (struct Hierarchy *nodeDataStructure, int Z);
+            void (*callDrawBelowZ) (struct Hierarchy *nodeDataStructure, int Z);
             void (*drawAll) (struct Hierarchy *nodeDataStructure);
             // Process
             void (*callProcess) (struct Hierarchy *nodeDataStructure);
@@ -172,12 +175,12 @@ void drawAll(Hierarchy *nodeDataStructure)
     }
 }
 // Processes a child from the Hierarchy
-void callProcess(Hierarchy *nodeDataStructure, int index)
+void callProcess(Hierarchy *nodeDataStructure, int index, void *args)
 {
     switch (nodeDataStructure->type)
     {
     case ARRAY_TYPE:
-        NodeArray_callProcess(&nodeDataStructure->array, index);
+        NodeArray_callProcess(&nodeDataStructure->array, index, args);
         break;
 
     default:
@@ -185,12 +188,12 @@ void callProcess(Hierarchy *nodeDataStructure, int index)
     }
 }
 // Processes a child from the Hierarchy by ID
-void callProcessByID(Hierarchy *nodeDataStructure, int ID)
+void callProcessByID(Hierarchy *nodeDataStructure, int ID, void *args)
 {
     switch (nodeDataStructure->type)
     {
     case ARRAY_TYPE:
-        NodeArray_callProcessByID(&nodeDataStructure->array, ID);
+        NodeArray_callProcessByID(&nodeDataStructure->array, ID, args);
         break;
 
     default:
@@ -198,12 +201,12 @@ void callProcessByID(Hierarchy *nodeDataStructure, int ID)
     }
 }
 // Processes all the Hierarchy
-void processAll(Hierarchy *nodeDataStructure)
+void processAll(Hierarchy *nodeDataStructure, void **args)
 {
     switch (nodeDataStructure->type)
     {
     case ARRAY_TYPE:
-        NodeArray_processAll(&nodeDataStructure->array);
+        NodeArray_processAll(&nodeDataStructure->array, args);
         break;
 
     default:

@@ -77,7 +77,7 @@ void crosshair()
     {
         for (int j = 0 - sY; j <= sY; j++)
         {
-            pixel(P.x + i, P.y + j, 9, pixelScale);
+            Draw_pixel(P.x + i, P.y + j, IDColor(6), pixelScale);
         }
     }
 }
@@ -175,15 +175,15 @@ void UIfunc()
         UPressed = false;
     }
 
-    quads(x1, y1, x2, y2, U.Bcol);
+    Draw_quads(x1, y1, x2, y2, IDColor(U.Bcol));
 
-    line(x1, y1, x1, y2, U.col, 1);
-    line(x1, y1, x2, y1, U.col, 1);
-    line(x2, y2, x1, y2, U.col, 1);
-    line(x2, y2, x2, y1, U.col, 1);
+    Draw_line(x1, y1, x1, y2, IDColor(U.col), 1);
+    Draw_line(x1, y1, x2, y1, IDColor(U.col), 1);
+    Draw_line(x2, y2, x1, y2, IDColor(U.col), 1);
+    Draw_line(x2, y2, x2, y1, IDColor(U.col), 1);
 
-    pixel(x2, y2, 9, pixelScale + pixelScale / 2);
-    pixel(x2, y2, 10, pixelScale);
+    Draw_pixel(x2, y2, IDColor(9), pixelScale + pixelScale / 2);
+    Draw_pixel(x2, y2, IDColor(10), pixelScale);
 }
 
 // - // Map Structs \\ 
@@ -230,12 +230,12 @@ void drawButton(Button *self, int col, int colB)
     int y1 = self->pos.y;
     int x2 = self->size.x + self->pos.x;
     int y2 = self->size.y + self->pos.y;
-    quads(x1, y1, x2, y2, colB);
+    Draw_quads(x1, y1, x2, y2, IDColor(colB));
 
-    line(x1, y1, x1, y2, col, 1);
-    line(x1, y1, x2, y1, col, 1);
-    line(x2, y2, x1, y2, col, 1);
-    line(x2, y2, x2, y1, col, 1);
+    Draw_line(x1, y1, x1, y2, IDColor(col), 1);
+    Draw_line(x1, y1, x2, y1, IDColor(col), 1);
+    Draw_line(x2, y2, x1, y2, IDColor(col), 1);
+    Draw_line(x2, y2, x2, y1, IDColor(col), 1);
 }
 void makeBtn(Button *btn, int x, int y, int sX, int sY)
 {
@@ -270,16 +270,16 @@ void rightClick()
 
     if (rC.active)
     {
-        quads(x1, y1, x2, y2, rC.Bcol);
+        Draw_quads(x1, y1, x2, y2, IDColor(rC.Bcol));
         CreateSector.pos.x = x1 + 1;
         CreateSector.pos.y = y2 - 1 - CreateSector.size.y;
         CreateSector.Draw(&CreateSector, rC.col, 11);
         write("CREATE SECTOR", CreateSector.pos.x + 1, CreateSector.pos.y + 3, pixelScale, 1, rC.col, getFA());
 
-        line(x1, y1, x1, y2, rC.col, 1);
-        line(x1, y1, x2, y1, rC.col, 1);
-        line(x2, y2, x1, y2, rC.col, 1);
-        line(x2, y2, x2, y1, rC.col, 1);
+        Draw_line(x1, y1, x1, y2, IDColor(rC.col), 1);
+        Draw_line(x1, y1, x2, y1, IDColor(rC.col), 1);
+        Draw_line(x2, y2, x1, y2, IDColor(rC.col), 1);
+        Draw_line(x2, y2, x2, y1, IDColor(rC.col), 1);
 
         // int xc = character('B', x1 + 5, y1 + 5, pixelScale, 2, 1, getFA());
     }
@@ -296,7 +296,7 @@ void clearBackground()
     {
         for (x = 0; x < sw; x++)
         {
-            pixel(x, y, 8, MpixelScale);
+            Draw_pixel(x, y, IDColor(8), MpixelScale);
         } // clear background color
     }
 }
@@ -327,7 +327,7 @@ void init()
     rC.sH = 30;        //
     makeBtn(&CreateSector, 0, 0, 28, 5);
 
-    make_VUID_Container(&exampleBox);
+    make_VUIE_Container(&exampleBox);
 
     exampleBox.transform.pos.cartesian.x = 20;
     exampleBox.transform.pos.cartesian.y = 20;
@@ -335,7 +335,7 @@ void init()
     exampleBox.transform.size.rect.width = 300;
     exampleBox.transform.size.rect.height = 300;
     exampleBox.transform.size.type = RECT_TYPE;
-    exampleBox.draw = true;
+    exampleBox.draw = false;
 
     printf("Inicialized\n");
 }
@@ -359,6 +359,8 @@ void display()
         */
 
         rightClick();
+
+        Draw_line(0, 50, 100, 50, IDColor(9), 1);
 
         // UIfunc();
         if (exampleBox.draw)

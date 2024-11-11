@@ -5,8 +5,6 @@
 
 //
 
-#include "Elements/elements.h"
-
 // <===================================================================================================================>
 
 //
@@ -16,95 +14,6 @@
 //  \=======================================/
 
 //
-
-// <===================================================================================================================>
-
-//
-
-//
-
-//-
-int GlobalNextID = 0;
-
-typedef struct Node
-{
-    enum elementType type;
-    union
-    {
-        Base base;
-        Container container;
-    };
-
-} Node;
-
-Node *newNode(enum elementType type, void *element)
-{
-    Node *node = (Node *)malloc(sizeof(Node));
-    node->type = type;
-    if (type == BASE)
-    {
-        node->base = *(Base *)element;
-    }
-    else if (type == CONTAINER)
-    {
-        node->container = *(Container *)element;
-    }
-    return node;
-}
-
-int getNodeID(Node *Node)
-{
-    switch (Node->type)
-    {
-    case BASE:
-        return Node->base.info.ID;
-        break;
-    case CONTAINER:
-        return Node->container.info.ID;
-        break;
-    default:
-        break;
-    }
-}
-void freeNode(Node *node)
-{
-    switch (node->type)
-    {
-    case CONTAINER:
-        node->container.free(&node->container);
-        break;
-
-    default:
-        break;
-    }
-}
-
-void callDraw(Node *node)
-{
-    switch (node->type)
-    {
-    case BASE:
-        break;
-    case CONTAINER:
-        node->container._draw(&node->container);
-        break;
-    default:
-        break;
-    }
-}
-void callProcess(Node *node)
-{
-    switch (node->type)
-    {
-    case BASE:
-        break;
-    case CONTAINER:
-        node->container._process(&node->container);
-        break;
-    default:
-        break;
-    }
-}
 
 // <===================================================================================================================>
 
@@ -276,11 +185,11 @@ typedef struct Color // Define color
         int id;
         struct
         {
-            int r, g, b;
+            float r, g, b;
         } rgb;
         struct
         {
-            int h, s, v;
+            float h, s, v;
         } hsv;
     };
 
@@ -292,7 +201,7 @@ void setColorByID(Color *col, int id) // Set color ID
     col->type = ID_TYPE;
     col->id = id;
 }
-void setColorByVal(Color *col, enum ColorType type, int r, int g, int b) // Set color value
+void setColorByVal(Color *col, enum ColorType type, float r, float g, float b) // Set color value
 {
     if (type == RGB_TYPE) // RGB (1)
     {
@@ -309,10 +218,16 @@ void setColorByVal(Color *col, enum ColorType type, int r, int g, int b) // Set 
         col->hsv.v = b;
     }
 }
-Color RGBColor(int r, int g, int b)
+Color *RGBColor(float r, float g, float b)
 {
-    Color col;
-    setColorByVal(&col, RGB_TYPE, r, g, b);
+    Color *col;
+    setColorByVal(col, RGB_TYPE, r, g, b);
+    return col;
+}
+Color *IDColor(int id)
+{
+    Color *col;
+    setColorByID(col, id);
     return col;
 }
 void copyColor(Color *col, Color *copy) // Copy color
@@ -343,6 +258,8 @@ void copyColor(Color *col, Color *copy) // Copy color
 //
 
 //
+
+int GlobalNextID = 0;
 
 typedef struct Info
 {

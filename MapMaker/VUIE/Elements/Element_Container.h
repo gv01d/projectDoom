@@ -1,8 +1,6 @@
-#include "../../Render/Draw.h"
-#include "Module_Transform.h"
-#include "HierarchyStructure/Hierarchy.h"
+#include "Element_Base.h"
 
-struct Element_Container
+typedef struct Container
 {
     // Info
     Private_Info info;
@@ -16,7 +14,7 @@ struct Element_Container
     // ------------------ Hierachy ------------------
 
     // Parent
-    Node (*getParent)(struct Container *);
+    Node *(*getParent)(struct Container *);
     void (*setParent)(struct Container *, struct Node *);
 
     // Children
@@ -36,7 +34,7 @@ struct Element_Container
     // Colors
     Color backgroundColor;
     Color outlineColor;
-    void (*setColors)(struct Container *, struct Color, struct Color); // PRIVATE_DEFAULT_CONTAINER_SET_COLORS : Done
+    void (*setColors)(struct Container *, struct Color *, struct Color *); // PRIVATE_DEFAULT_CONTAINER_SET_COLORS : Done
 
     // Draw calling
     bool draw;
@@ -52,7 +50,7 @@ struct Element_Container
 
     // -------------- Process Structure --------------
     // Process calling
-    void (*_process)(struct Container *); // PRIVATE_DEFAULT_CONTAINER_PROCESS_CALLING : TODO
+    void (*_process)(struct Container *, void *); // PRIVATE_DEFAULT_CONTAINER_PROCESS_CALLING : TODO
 
     // Self Process
     bool processSelf;
@@ -65,7 +63,7 @@ struct Element_Container
     // ------------------ Functions ------------------
     // Erase Self
     void (*free)(struct Container *);
-};
+} Container;
 
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv //
 // -------------------------------------------------- Container Functions -------------------------------------------------- //
@@ -77,7 +75,7 @@ void PRIVATE_DEFAULT_CONTAINER_CREATE_POINTS(Container *container)
     if (container->transform.size.type == RECT_TYPE)
     {
         container->pointCount = 2;
-        container->points = (int *)malloc(2 * sizeof(int));
+        container->points = (Vector2 *)malloc(2 * sizeof(Vector2));
 
         definePos(&container->transform.pos, &container->points[0].x, &container->points[0].y);
 
@@ -87,7 +85,7 @@ void PRIVATE_DEFAULT_CONTAINER_CREATE_POINTS(Container *container)
     else if (container->transform.size.type == CIRC_TYPE)
     {
         container->pointCount = container->transform.size.circ.points;
-        container->points = (int *)malloc(container->transform.size.circ.points * sizeof(int));
+        container->points = (Vector2 *)malloc(container->transform.size.circ.points * sizeof(Vector2));
 
         int r = container->transform.size.circ.radius;
         int theta = 360 / container->transform.size.circ.points;
@@ -104,8 +102,8 @@ void PRIVATE_DEFAULT_CONTAINER_CREATE_POINTS(Container *container)
 // Set the Container colors // --------------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_CONTAINER_SET_COLORS(Container *container, Color *backgroundColor, Color *outlineColor)
 {
-    copyColor(&container->backgroundColor, &backgroundColor);
-    copyColor(&container->outlineColor, &outlineColor);
+    copyColor(&container->backgroundColor, backgroundColor);
+    copyColor(&container->outlineColor, outlineColor);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -131,8 +129,10 @@ void PRIVATE_DEFAULT_CONTAINER_DRAW_CALLING(Container *container)
     container->createPoints(container);
 
     // Draw Itself
+    printf("Container.drawSelf = %s\n", container->drawSelf ? "true" : "false");
     if (container->drawSelf)
     {
+        printf("TEST\n");
         container->_drawSelf(container);
     }
 
@@ -195,7 +195,7 @@ void PRIVATE_DEFAULT_CONTAINER_DRAW_CHILDREN(Container *container)
 // ------------------------------------------------------------------------------------------------------------------------- //
 
 // Process calling for container // ---------------------------------------------------------------------------------------- //
-void PRIVATE_DEFAULT_CONTAINER_PROCESS_CALLING(Container *container)
+void PRIVATE_DEFAULT_CONTAINER_PROCESS_CALLING(Container *container, void *args)
 {
     /*
 
@@ -206,7 +206,7 @@ void PRIVATE_DEFAULT_CONTAINER_PROCESS_CALLING(Container *container)
     // Process itself
     if (container->processSelf)
     {
-        container->_processSelf(container, NULL);
+        container->_processSelf(container, args);
     }
 
     // Process Children
@@ -218,9 +218,9 @@ void PRIVATE_DEFAULT_CONTAINER_PROCESS_CALLING(Container *container)
 // ------------------------------------------------------------------------------------------------------------------------- //
 
 // Process children for container // --------------------------------------------------------------------------------------- //
-void PRIVATE_DEFAULT_CONTAINER_PROCESS_CHILDREN(Container *container)
+void PRIVATE_DEFAULT_CONTAINER_PROCESS_CHILDREN(Container *container, void **args)
 {
-    processAll(&container->hierarchy);
+    processAll(&container->hierarchy, args);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -286,7 +286,7 @@ void PRIVATE_DEFAULT_CONTAINER_SET_PARENT(Container *container, Node *parent)
 
 //
 
-void make_VUID_Container(Container *container)
+void make_VUIE_Container(Container *container)
 {
     // Info
     container->info.ID = GlobalNextID++;
@@ -347,11 +347,28 @@ void make_VUID_Container(Container *container)
     container->free = PRIVATE_DEFAULT_CONTAINER_FREE;
 }
 
-Container *new_VUID_Container()
+Container *new_VUIE_Container()
 {
     Container *container = (Container *)malloc(sizeof(Container));
-    makeContainer(container);
+    make_VUIE_Container(container);
     return container;
 }
 
 // ------------------------------------------------------------------------------------------------------------------------- //
+
+//
+
+void PRIVATE_NODE_CONTAINER_FREE(Node *Node)
+{
+    ((Container *)Node->element)->free((Container *)Node->element);
+}
+
+void PRIVATE_NODE_CONTAINER_DRAW(Node *Node)
+{
+    ((Container *)Node->element)->_draw((Container *)Node->element);
+}
+
+void PRIVATE_NODE_CONTAINER_PROCESS(Node *Node, void *args)
+{
+    ((Container *)Node->element)->_process((Container *)Node->element, args);
+}

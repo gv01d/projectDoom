@@ -52,6 +52,7 @@ int dist(int x1, int y1, int x2, int y2)
 
 void Draw_Polygon(Vector2 *points, int amount, Color *color)
 {
+    printf("Drawing Polygon\n");
     setColor(color);
 
     glBegin(GL_POLYGON);
@@ -74,7 +75,7 @@ void Draw_PolygonOutline(Vector2 *points, int amount, Color *color, int width)
     setColor(color);
 
     // get width
-    int glWidth = glGet(GL_LINE_WIDTH);
+    int glWidth = glutGet(GL_LINE_WIDTH);
     glLineWidth(width * glWidth);
     glBegin(GL_LINE_LOOP);
     for (size_t i = 0; i < amount; i++)

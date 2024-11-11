@@ -1,4 +1,4 @@
-#include "../Atributes.h"
+#include "../Node.h"
 
 typedef struct NodeArray_DataStructure
 {
@@ -23,7 +23,7 @@ Node *NodeArray_getNodebyID(NodeArray *nodeArray, int ID)
 {
     for (int i = 0; i < nodeArray->nodeAmount; i++)
     {
-        if (getNodeID(nodeArray->node[i]) == ID)
+        if (nodeArray->node[i]->ID == ID)
         {
             return nodeArray->node[i];
         }
@@ -64,7 +64,7 @@ void NodeArray_removeNodebyID(NodeArray *nodeArray, int ID)
 {
     for (int i = 0; i < nodeArray->nodeAmount; i++)
     {
-        if (getNodeID(nodeArray->node[i]) == ID)
+        if (nodeArray->node[i]->ID == ID)
         {
             NodeArray_removeNode(nodeArray, i);
             return;
@@ -88,15 +88,15 @@ void NodeArray_removeAll(NodeArray *nodeArray)
 */
 void NodeArray_callDraw(NodeArray *nodeArray, int index)
 {
-    callDraw(nodeArray->node[index]);
+    NodeCallDraw(nodeArray->node[index]);
 }
 void NodeArray_callDrawByID(NodeArray *nodeArray, int ID)
 {
     for (size_t i = 0; i < nodeArray->nodeAmount; i++)
     {
-        if (getNodeID(nodeArray->node[i]) == ID)
+        if (nodeArray->node[i]->ID == ID)
         {
-            callDraw(nodeArray->node[i]);
+            NodeCallDraw(nodeArray->node[i]);
             return;
         }
     }
@@ -106,29 +106,29 @@ void NodeArray_drawAll(NodeArray *nodeArray)
 {
     for (size_t i = 0; i < nodeArray->nodeAmount; i++)
     {
-        callDraw(nodeArray->node[i]);
+        NodeCallDraw(nodeArray->node[i]);
     }
 }
 
-void NodeArray_callProcess(NodeArray *nodeArray, int index)
+void NodeArray_callProcess(NodeArray *nodeArray, int index, void *args)
 {
-    callProcess(nodeArray->node[index]);
+    NodeCallProcess(nodeArray->node[index], args);
 }
-void NodeArray_callProcessByID(NodeArray *nodeArray, int ID)
+void NodeArray_callProcessByID(NodeArray *nodeArray, int ID, void *args)
 {
     for (size_t i = 0; i < nodeArray->nodeAmount; i++)
     {
-        if (getNodeID(nodeArray->node[i]) == ID)
+        if (nodeArray->node[i]->ID == ID)
         {
-            callProcess(nodeArray->node[i]);
+            NodeCallProcess(nodeArray->node[i], args);
             return;
         }
     }
 }
-void NodeArray_processAll(NodeArray *nodeArray)
+void NodeArray_processAll(NodeArray *nodeArray, void **args)
 {
     for (size_t i = 0; i < nodeArray->nodeAmount; i++)
     {
-        callProcess(nodeArray->node[i]);
+        NodeCallProcess(nodeArray->node[i], args[i]);
     }
 }
