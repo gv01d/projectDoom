@@ -98,6 +98,8 @@ void Position_setParent(Position *pos, Position *parent) // Set referencial posi
 
         return;
     }
+    pos->x = pos->Global.x - parent->Global.x;
+    pos->y = pos->Global.y - parent->Global.y;
 
     pos->ReferToParent = true;
     pos->parent = parent;

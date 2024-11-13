@@ -87,35 +87,46 @@ void VUIE_DEBUGTOOL_PRINTPOINTS(Vector2 *points, int amount)
 // Create the Container points --------------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_CONTAINER_CREATE_POINTS(Container *container)
 {
+    int scale = container->transform.size.globalScale;
+    printf("ID : %d\n", container->info.ID);
     if (container->transform.size.type == RECT_TYPE)
     {
         container->pointCount = 4;
-        container->points = (Vector2 *)malloc(4 * sizeof(Vector2));
+        container->points = (Vector2 *)realloc(container->points, 4 * sizeof(Vector2));
 
         Position_get(&container->transform.pos, &container->points[0].x, &container->points[0].y);
+        int w = (container->transform.size.width / 2) * scale;
+        int h = (container->transform.size.height / 2) * scale;
 
-        container->points[1].x = container->points[0].x + (container->transform.size.rect.width * window.PixelScale);
+        container->points[1].x = container->points[0].x + w;
+        container->points[2].y = container->points[0].y + h;
+        //
+        container->points[0].x -= w;
+        container->points[0].y -= h;
+        //
         container->points[1].y = container->points[0].y;
         //
         container->points[2].x = container->points[1].x;
-        container->points[2].y = container->points[0].y + (container->transform.size.rect.height * window.PixelScale);
         //
         container->points[3].x = container->points[0].x;
         container->points[3].y = container->points[2].y;
+
+        printf("pos : (%d, %d) | size : (%d, %d)\n", container->transform.pos.Global.x, container->transform.pos.Global.y, container->transform.size.width, container->transform.size.height);
+        printf("Point (4) : (%d, %d) | (%d, %d) | (%d, %d) | (%d, %d)\n", container->points[0].x, container->points[0].y, container->points[1].x, container->points[1].y, container->points[2].x, container->points[2].y, container->points[3].x, container->points[3].y);
     }
     else if (container->transform.size.type == CIRC_TYPE)
     {
-        container->pointCount = container->transform.size.circ.points;
-        container->points = (Vector2 *)malloc(container->transform.size.circ.points * sizeof(Vector2));
+        container->pointCount = container->transform.size.points;
+        container->points = (Vector2 *)realloc(container->points, container->transform.size.points * sizeof(Vector2));
 
-        int r = container->transform.size.circ.radius * window.PixelScale;
-        int theta = 360 / container->transform.size.circ.points;
-        for (int i = 0; i < container->transform.size.circ.points; i++)
+        int r = container->transform.size.radius * scale;
+        int theta = 360 / container->transform.size.points;
+        for (int i = 0; i < container->transform.size.points; i++)
         {
             polarToCartesian(r, theta * i, &container->points[i].x, &container->points[i].y);
-            container->points[i].x += (container->transform.pos.Global.x + r);
-            container->points[i].y += (container->transform.pos.Global.y + r);
-            // printf("Point %d : (%d, %d)\n", i, container->points[i].x, container->points[i].y);
+            container->points[i].x += (container->transform.pos.Global.x);
+            container->points[i].y += (container->transform.pos.Global.y);
+            printf("Point %d : (%d, %d)\n", i, container->points[i].x, container->points[i].y);
         }
     };
 }
@@ -189,7 +200,7 @@ void PRIVATE_DEFAULT_CONTAINER_DRAW_CALLING(Container *container)
         }
     }
 
-    glScissor(min_x + (*pixelScale / 2), min_y + (*pixelScale / 2), max_x - min_x, max_y - min_y);
+    glScissor(min_x * window.PixelScale + (*pixelScale / 2), min_y * window.PixelScale + (*pixelScale / 2), (max_x - min_x) * window.PixelScale, (max_y - min_y) * window.PixelScale);
     // -------------------------------------------------
 
     // printf("Amount : %d \n", container->getChildAmount(container));
@@ -338,6 +349,7 @@ void make_VUIE_Container(Container *container)
 
     // Position & Size
     setTransform(&container->transform, &PRIVATE_DEFAULT_POSITION, &PRIVATE_DEFAULT_SIZE);
+    container->transform.size.globalScale = 1;
 
     // --- Hierachy --- //
     // Self Node

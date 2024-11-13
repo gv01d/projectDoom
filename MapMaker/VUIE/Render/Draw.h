@@ -24,7 +24,7 @@ void Draw_pixel(int x, int y, Color *color, int w) // draw a pixel at x/y with r
 
     glPointSize(*pixelScale * w);
     glBegin(GL_POINTS);
-    glVertex2i(x, y);
+    glVertex2i(x * *pixelScale, y * *pixelScale);
     glEnd();
 }
 
@@ -35,8 +35,8 @@ void Draw_line(int x1, int y1, int x2, int y2, Color *color, int w)
 
     glLineWidth(*pixelScale * w);
     glBegin(GL_LINES);
-    glVertex2i(x1, y1);
-    glVertex2i(x2, y2);
+    glVertex2i(x1 * *pixelScale, y1 * *pixelScale);
+    glVertex2i(x2 * *pixelScale, y2 * *pixelScale);
     glEnd();
 }
 
@@ -45,10 +45,10 @@ void Draw_quads(int x1, int y1, int x2, int y2, Color *color)
     setGLColor(color);
 
     glBegin(GL_QUADS);
-    glVertex2i(x1, y1);
-    glVertex2i(x1, y2);
-    glVertex2i(x2, y2);
-    glVertex2i(x2, y1);
+    glVertex2i(x1 * *pixelScale, y1 * *pixelScale);
+    glVertex2i(x1 * *pixelScale, y2 * *pixelScale);
+    glVertex2i(x2 * *pixelScale, y2 * *pixelScale);
+    glVertex2i(x2 * *pixelScale, y1 * *pixelScale);
     glEnd();
 }
 
@@ -68,7 +68,7 @@ void Draw_Polygon(Vector2 *points, int amount, Color *color)
     // printf("Amount : %d\n", amount);
     for (int i = 0; i < amount; i++)
     {
-        glVertex2i(points[i].x + (*pixelScale / 2), points[i].y + (*pixelScale / 2));
+        glVertex2i(points[i].x * *pixelScale + (*pixelScale / 2), points[i].y * *pixelScale + (*pixelScale / 2));
         // printf("%d : (%d, %d)\n", i, points[i].x, points[i].y);
     }
     glEnd();

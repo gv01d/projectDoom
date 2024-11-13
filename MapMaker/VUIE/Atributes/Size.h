@@ -6,48 +6,62 @@ enum SizeType
 
 typedef struct Size // Define size
 {
-    union
-    {
-        struct // Rectangle ( Height, Width )
-        {
-            int height, width;
-        } rect;
-        struct // Circle ( Radius )
-        {
-            int radius;
-            int points;
-        } circ;
-    };
+    int height, width;
+
+    int radius, points;
+
+    int scale;
+
+    int globalScale;
+
+    bool afectedByParent;
+    int *parentScale;
 
     enum SizeType type;
 
 } Size;
-void setSize(struct Size *size, enum SizeType type, int height, int width) // Set size
+
+void Size_setScale(Size *size, int scale) // Set scale
+{
+    size->scale = scale;
+    if (size->afectedByParent)
+    {
+        size->globalScale = *size->parentScale * scale;
+    }
+    else
+    {
+        size->scale = scale;
+    }
+}
+
+void Size_set(struct Size *size, enum SizeType type, int a, int b, int scale) // Set size
 {
     size->type = type;
+    size->scale = scale;
     if (type == RECT_TYPE) // Rectangle (0)
     {
-        size->rect.height = height;
-        size->rect.width = width;
+        size->height = a;
+        size->width = b;
     }
     else if (type == CIRC_TYPE) // Circle (1)
     {
-        size->circ.radius = height;
+        size->radius = a;
+        size->points = b;
+        size->height = a * 2;
+        size->width = a * 2;
     }
 }
-void copySize(Size *size, Size *copy) // Copy size
+void Size_copy(Size *size, Size *copy) // Copy size
 {
     size->type = copy->type;
-    if (copy->type == RECT_TYPE) // Rectangle (0)
-    {
-        size->rect.height = copy->rect.height;
-        size->rect.width = copy->rect.width;
-    }
-    else if (copy->type == CIRC_TYPE) // Circle (1)
-    {
-        size->circ.radius = copy->circ.radius;
-        size->circ.points = copy->circ.points;
-    }
+    size->scale = copy->scale;
+    size->globalScale = copy->globalScale;
+    size->afectedByParent = copy->afectedByParent;
+    size->parentScale = copy->parentScale;
+    size->height = copy->height;
+    size->width = copy->width;
+    size->radius = copy->radius;
+    size->points = copy->points;
 }
 
 Size PRIVATE_DEFAULT_SIZE = {RECT_TYPE, 0, 0};

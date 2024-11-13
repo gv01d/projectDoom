@@ -69,34 +69,41 @@ typedef struct Base // Define base
 // Create points for container --------------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_BASE_CREATE_POINTS(Base *base)
 {
+    int scale = base->transform.size.globalScale;
     if (base->transform.size.type == RECT_TYPE)
     {
         base->pointCount = 4;
-        base->points = (Vector2 *)malloc(4 * sizeof(Vector2));
+        base->points = (Vector2 *)realloc(base->points, 4 * sizeof(Vector2));
 
         Position_get(&base->transform.pos, &base->points[0].x, &base->points[0].y);
+        int w = (base->transform.size.width / 2) * scale;
+        int h = (base->transform.size.height / 2) * scale;
 
-        base->points[1].x = base->points[0].x + base->transform.size.rect.width;
+        base->points[1].x = base->points[0].x + w;
+        base->points[2].y = base->points[0].y + h;
+        //
+        base->points[0].x -= w;
+        base->points[0].y -= h;
+        //
         base->points[1].y = base->points[0].y;
         //
         base->points[2].x = base->points[1].x;
-        base->points[2].y = base->points[0].y + base->transform.size.rect.height;
         //
         base->points[3].x = base->points[0].x;
         base->points[3].y = base->points[2].y;
     }
     else if (base->transform.size.type == CIRC_TYPE)
     {
-        base->pointCount = base->transform.size.circ.points;
-        base->points = (Vector2 *)malloc(base->transform.size.circ.points * sizeof(Vector2));
+        base->pointCount = base->transform.size.points;
+        base->points = (Vector2 *)realloc(base->points, base->transform.size.points * sizeof(Vector2));
 
-        int r = base->transform.size.circ.radius;
-        int theta = 360 / base->transform.size.circ.points;
-        for (int i = 0; i < base->transform.size.circ.points; i++)
+        int r = base->transform.size.radius;
+        int theta = 360 / base->transform.size.points;
+        for (int i = 0; i < base->transform.size.points; i++)
         {
             polarToCartesian(r, theta * i, &base->points[i].x, &base->points[i].y);
-            base->points[i].x += base->transform.pos.Global.x + base->transform.size.circ.radius;
-            base->points[i].y += base->transform.pos.Global.y + base->transform.size.circ.radius;
+            base->points[i].x += base->transform.pos.Global.x;
+            base->points[i].y += base->transform.pos.Global.y;
         }
     };
 }

@@ -46,7 +46,7 @@ struct
 void startWindow(char *name)
 {
     Draw_SetPixelScale(&window.PixelScale);
-    window.PixelScale = 50;
+    window.PixelScale = 10;
     window.rawSize.width = 1600;
     window.rawSize.height = 900;
     window.size.width = window.rawSize.width / window.PixelScale;
@@ -126,13 +126,10 @@ void containerInit()
     make_VUIE_Container(&exampleBox);
 
     printf("Inicializing Container Values...\n");
-    exampleBox.transform.pos.type = CARTESIAN_TYPE;
     Position_setParent(&exampleBox.transform.pos, &mouse.pos);
     Position_set(&exampleBox.transform.pos, CARTESIAN_TYPE, 0, 0);
 
-    exampleBox.transform.size.type = RECT_TYPE;
-    exampleBox.transform.size.rect.width = 30;
-    exampleBox.transform.size.rect.height = 10;
+    Size_set(&exampleBox.transform.size, RECT_TYPE, 30, 30, 1);
 
     exampleBox.outlineWidth = 0;
 
@@ -142,11 +139,12 @@ void containerInit()
     exampleBox.drawChildren = true;
 
     exampleBox.addChild(&exampleBox, c2.getSelf(&c2));
+    c2.transform.pos.ReferToParent = true;
 
-    Node *Test = exampleBox.getChild(&exampleBox, 0);
-    ((Container *)Test->element)->_draw((Container *)Test->element);
+    // Node *Test = exampleBox.getChild(&exampleBox, 0);
+    // ((Container *)Test->element)->_draw((Container *)Test->element);
 
-    printf("exBox.ID = %d\n", ((Container *)Test->element)->info.ID);
+    // printf("exBox.ID = %d\n", ((Container *)Test->element)->info.ID);
 }
 
 void c2Init()
@@ -155,14 +153,13 @@ void c2Init()
     make_VUIE_Container(&c2);
 
     printf("Inicializing Container2 Values...\n");
-    c2.transform.pos.type = CARTESIAN_TYPE;
     Position_setParent(&c2.transform.pos, NULL);
-    Position_set(&c2.transform.pos, CARTESIAN_TYPE, 50, -10);
+    Position_set(&c2.transform.pos, CARTESIAN_TYPE, 0, 0);
     c2.setColors(&c2, RGBColor(0.0, 1.0, 0.0), RGBColor(1.0, 0.0, 1.0));
 
-    c2.transform.size.type = CIRC_TYPE;
-    c2.transform.size.circ.points = 5;
-    c2.transform.size.circ.radius = 10;
+    Size_set(&c2.transform.size, CIRC_TYPE, 14, 8, 1);
+
+    // Size_set(&c2.transform.size, RECT_TYPE, 28, 28, 1);
 
     c2.outlineWidth = 0;
 
@@ -199,9 +196,7 @@ void mouseMotion(int x, int y)
     mouse.rawPos.x = x;
     mouse.rawPos.y = y;
     x = (x + (window.PixelScale / 2)) / window.PixelScale;
-    x *= window.PixelScale;
     y = (window.rawSize.height - (y - (window.PixelScale / 2))) / window.PixelScale;
-    y *= window.PixelScale;
     Position_set(&mouse.pos, CARTESIAN_TYPE, x, y);
     /*
     mouse.windowPos.x = x;
@@ -222,13 +217,19 @@ void idle()
 // <.----------------.>
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' UI '>>>>>>>>>>
-
 // <.-----------------.>
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' Display Funtion '>>>>>>>>>>
-
+int delay = 0;
+bool conected = true;
 void display()
 {
+    if (delay > 0)
+    {
+
+        delay--;
+    }
+
     glClear(GL_COLOR_BUFFER_BIT); // Clear the screen
     Position_process(&mouse.pos);
     // printf("mouse.global.pos : (%d, %d)\n", mouse.pos.Global.x, mouse.pos.Global.y);
@@ -237,7 +238,9 @@ void display()
 
     exampleBox._process(&exampleBox, NULL);
     exampleBox._draw(&exampleBox);
-    // printf("Positions: ExBox : (%d, %d) | C2 : (%d, %d)\n", exampleBox.transform.pos.Global.x, exampleBox.transform.pos.Global.y, c2.transform.pos.Global.x, c2.transform.pos.Global.y);
+    // c2._draw(&c2);
+    printf("Positions: ExBox : (%d, %d) | C2 : (%d, %d) | scale : (%d)\n", exampleBox.transform.pos.Global.x, exampleBox.transform.pos.Global.y, c2.transform.pos.Global.x, c2.transform.pos.Global.y, window.PixelScale);
+    printf("C2.Points (4) : (%d, %d) | (%d, %d) | (%d, %d) | (%d, %d)\n", c2.points[0].x, c2.points[0].y, c2.points[1].x, c2.points[1].y, c2.points[2].x, c2.points[2].y, c2.points[3].x, c2.points[3].y);
 
     // Node *Test = exampleBox.getChild(&exampleBox, 0);
     //((Container *)Test->element)->_draw((Container *)Test->element);
@@ -246,28 +249,41 @@ void display()
     //  PRIVATE_NODE_CONTAINER_DRAW(Test);
 
     // Draw a point at the mouse position
+    if (mouse.leftButton && conected)
+    {
+        printf("Disconect\n");
+        Position_setParent(&exampleBox.transform.pos, NULL);
+        conected = false;
+    }
+    else if (mouse.rightButton && !conected)
+    {
+        Position_setParent(&exampleBox.transform.pos, &mouse.pos);
+        conected = true;
+    }
 
-    if (k.w)
+    if (k.w && delay == 0)
     {
         jpW = true;
         window.PixelScale--;
         printf("PixelScale-- : %d\n", window.PixelScale);
         glPointSize(window.PixelScale); // pixel size
         glLineWidth(window.PixelScale);
+        delay = 10;
     }
-    else if (k.s)
+    else if (k.s && delay == 0)
     {
         jpS = true;
         window.PixelScale++;
         printf("PixelScale++ : %d\n", window.PixelScale);
         glPointSize(window.PixelScale); // pixel size
         glLineWidth(window.PixelScale);
+        delay = 10;
     }
 
-    glColor3f(1.0, 0.0, 0.0); // Set the color to red
+    glColor3f(1.0, 1.0, 1.0); // Set the color to red
     glBegin(GL_POINTS);
     glVertex2i(40 * window.PixelScale, 40 * window.PixelScale);
-    glVertex2i(mouse.pos.x, mouse.pos.y);
+    glVertex2i(mouse.pos.x * window.PixelScale, mouse.pos.y * window.PixelScale);
     glEnd();
 
     glutSwapBuffers(); // Swap the buffers to display the scene
@@ -300,6 +316,33 @@ void keysUp(unsigned char key, int x, int y)
     }
 }
 
+void mouseBtn(int button, int state, int x, int y)
+{
+    if (button == GLUT_LEFT_BUTTON)
+    {
+        if (state == GLUT_DOWN)
+        {
+            mouse.leftButton = true;
+        }
+        else
+        {
+            mouse.leftButton = false;
+        }
+    }
+
+    if (button == GLUT_RIGHT_BUTTON)
+    {
+        if (state == GLUT_DOWN)
+        {
+            mouse.rightButton = true;
+        }
+        else
+        {
+            mouse.rightButton = false;
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -321,6 +364,7 @@ int main(int argc, char *argv[])
     glutKeyboardUpFunc(keysUp);                                      //
     glutPassiveMotionFunc(mouseMotion);                              // Register the passive motion callback
     glutMotionFunc(mouseMotion);                                     // Register the active motion callback
+    glutMouseFunc(mouseBtn);                                         //
     glutIdleFunc(idle);                                              // Register the idle function
     glutMainLoop();
     return 0;
