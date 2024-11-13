@@ -329,8 +329,8 @@ void init()
 
     make_VUIE_Container(&exampleBox);
 
-    exampleBox.transform.pos.cartesian.x = 20;
-    exampleBox.transform.pos.cartesian.y = 20;
+    exampleBox.transform.pos.x = 20;
+    exampleBox.transform.pos.y = 20;
     exampleBox.transform.pos.type = CARTESIAN_TYPE;
     exampleBox.transform.size.rect.width = 300;
     exampleBox.transform.size.rect.height = 300;

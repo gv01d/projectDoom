@@ -1,4 +1,4 @@
-#include "../Node.h"
+#include "Node.h"
 
 typedef struct NodeArray_DataStructure
 {
@@ -8,11 +8,17 @@ typedef struct NodeArray_DataStructure
 
 } NodeArray;
 
-void NodeArray_addNode(NodeArray *nodeArray, Node *node)
+int NodeArray_getNodeAmount(NodeArray *nodeArray)
+{
+    return nodeArray->nodeAmount;
+}
+
+void NodeArray_addNode(NodeArray *nodeArray, Node *node, Node *parent, void *pos)
 {
     nodeArray->nodeAmount++;
     nodeArray->node = (Node **)realloc(nodeArray->node, nodeArray->nodeAmount * sizeof(Node *));
     nodeArray->node[nodeArray->nodeAmount - 1] = node;
+    VUIE_GLOBAL_NODE_FUNCTIONS[node->type].addParent(node, parent, pos);
 }
 Node *NodeArray_getNode(NodeArray *nodeArray, int index)
 {
@@ -104,7 +110,11 @@ void NodeArray_callDrawByID(NodeArray *nodeArray, int ID)
 
 void NodeArray_drawAll(NodeArray *nodeArray)
 {
-    for (size_t i = 0; i < nodeArray->nodeAmount; i++)
+    /*
+    VUIE_GLOBAL_NODE_FUNCTIONS[1].draw(nodeArray->node[0]);
+    printf("C2.ID = %d\n", ((Container *)nodeArray->node[0]->element)->info.ID);
+    */
+    for (int i = 0; i < nodeArray->nodeAmount; i++)
     {
         NodeCallDraw(nodeArray->node[i]);
     }
@@ -125,10 +135,18 @@ void NodeArray_callProcessByID(NodeArray *nodeArray, int ID, void *args)
         }
     }
 }
-void NodeArray_processAll(NodeArray *nodeArray, void **args)
+void NodeArray_processAll(NodeArray *nodeArray, bool argB, void **args)
 {
-    for (size_t i = 0; i < nodeArray->nodeAmount; i++)
+    if (args)
     {
-        NodeCallProcess(nodeArray->node[i], args[i]);
+        for (int i = 0; i < nodeArray->nodeAmount; i++)
+        {
+            NodeCallProcess(nodeArray->node[i], args[i]);
+        }
+        return;
+    }
+    for (int i = 0; i < nodeArray->nodeAmount; i++)
+    {
+        NodeCallProcess(nodeArray->node[i], NULL);
     }
 }

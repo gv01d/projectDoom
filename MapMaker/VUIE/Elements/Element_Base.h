@@ -1,4 +1,6 @@
-#include "../Module_Transform.h"
+#include "../Atributes/Transform.h"
+#include "../Atributes/Info.h"
+#include "../Render/Draw.h"
 #include "../HierarchyStructure/Hierarchy.h"
 
 typedef struct Base // Define base
@@ -14,11 +16,15 @@ typedef struct Base // Define base
 
     // ------------------ Hierachy ------------------
 
+    // self
+    Node *(*getSelf)(struct Base *);
+
     // Parent
     Node *(*getParent)(struct Base *);
     void (*setParent)(struct Base *, struct Node *);
 
     // Children
+    int (*getChildAmount)(struct Base *);
     void (*addChild)(struct Base *, struct Node *);
     void (*removeChild)(struct Base *, int);
     void (*removeChildByID)(struct Base *, int);
@@ -50,7 +56,7 @@ typedef struct Base // Define base
 
     // Children Process
     bool processChildren;
-    void (*_processChildren)(struct Base *, void **); // TODO
+    void (*_processChildren)(struct Base *, bool, void **); // TODO
 
     // ------------------ Functions ------------------
     // Erase Self
@@ -65,13 +71,19 @@ void PRIVATE_DEFAULT_BASE_CREATE_POINTS(Base *base)
 {
     if (base->transform.size.type == RECT_TYPE)
     {
-        base->pointCount = 2;
-        base->points = (Vector2 *)malloc(2 * sizeof(Vector2));
+        base->pointCount = 4;
+        base->points = (Vector2 *)malloc(4 * sizeof(Vector2));
 
-        definePos(&base->transform.pos, &base->points[0].x, &base->points[0].y);
+        Position_get(&base->transform.pos, &base->points[0].x, &base->points[0].y);
 
         base->points[1].x = base->points[0].x + base->transform.size.rect.width;
-        base->points[1].y = base->points[0].y + base->transform.size.rect.height;
+        base->points[1].y = base->points[0].y;
+        //
+        base->points[2].x = base->points[1].x;
+        base->points[2].y = base->points[0].y + base->transform.size.rect.height;
+        //
+        base->points[3].x = base->points[0].x;
+        base->points[3].y = base->points[2].y;
     }
     else if (base->transform.size.type == CIRC_TYPE)
     {
@@ -83,6 +95,8 @@ void PRIVATE_DEFAULT_BASE_CREATE_POINTS(Base *base)
         for (int i = 0; i < base->transform.size.circ.points; i++)
         {
             polarToCartesian(r, theta * i, &base->points[i].x, &base->points[i].y);
+            base->points[i].x += base->transform.pos.Global.x + base->transform.size.circ.radius;
+            base->points[i].y += base->transform.pos.Global.y + base->transform.size.circ.radius;
         }
     };
 }
@@ -139,7 +153,7 @@ void PRIVATE_DEFAULT_BASE_DRAW_CALLING(Base *base)
     // -------------------------------------------------
 
     // Draw Children
-    if (base->drawChildren)
+    if (base->drawChildren && !(base->getChildAmount(base) <= 0))
     {
         base->_drawChildren(base);
     }
@@ -172,17 +186,17 @@ void PRIVATE_DEFAULT_BASE_PROCESS_CALLING(Base *base, void *args)
     }
 
     // Process Children
-    if (base->processChildren)
+    if (base->processChildren && !(base->getChildAmount(base) <= 0))
     {
-        base->_processChildren(base, NULL);
+        base->_processChildren(base, false, NULL);
     }
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
 // Process children for container // --------------------------------------------------------------------------------------- //
-void PRIVATE_DEFAULT_BASE_PROCESS_CHILDREN(Base *base, void **args)
+void PRIVATE_DEFAULT_BASE_PROCESS_CHILDREN(Base *base, bool argB, void **args)
 {
-    processAll(&base->hierarchy, args);
+    processAll(&base->hierarchy, argB, args);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -196,7 +210,7 @@ void PRIVATE_DEFAULT_BASE_FREE(Base *base)
 // Add node to base -------------------------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_BASE_ADD_CHILD(Base *base, Node *node)
 {
-    addChild(&base->hierarchy, node);
+    addChild(&base->hierarchy, node, (void *)&base->transform.pos);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -242,6 +256,20 @@ void PRIVATE_DEFAULT_BASE_SET_PARENT(Base *base, Node *parent)
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
+// Get self Node from base -------------------------------------------------------------------------------------------- //
+Node *PRIVATE_DEFAULT_BASE_GET_SELF(Base *base)
+{
+    return base->hierarchy.self;
+}
+// ------------------------------------------------------------------------------------------------------------------------- //
+
+// get Child amount from base ----------------------------------------------------------------------------------------- //
+int PRIVATE_DEFAULT_BASE_GET_CHILD_AMOUNT(Base *base)
+{
+    return getChildAmount(&base->hierarchy);
+}
+// ------------------------------------------------------------------------------------------------------------------------- //
+
 // ------------------------------------------------------------------------------------------------------------------------- //
 
 // CREATORS :
@@ -257,12 +285,17 @@ void make_VUIE_base(Base *base)
     setTransform(&base->transform, &PRIVATE_DEFAULT_POSITION, &PRIVATE_DEFAULT_SIZE);
 
     // --- Hierachy --- //
+    // Self Node
+    base->hierarchy.self = newNode(BASE, base, base->info.ID);
+    base->getSelf = PRIVATE_DEFAULT_BASE_GET_SELF;
+
     // Parent
     base->hierarchy.parent = NULL;
     base->getParent = PRIVATE_DEFAULT_BASE_GET_PARENT;
     base->setParent = PRIVATE_DEFAULT_BASE_SET_PARENT;
 
     // Children
+    base->getChildAmount = PRIVATE_DEFAULT_BASE_GET_CHILD_AMOUNT;
     base->addChild = PRIVATE_DEFAULT_BASE_ADD_CHILD;
     base->removeChild = PRIVATE_DEFAULT_BASE_REMOVE_CHILD;
     base->removeChildByID = PRIVATE_DEFAULT_BASE_REMOVE_CHILD_BY_ID;
@@ -276,11 +309,11 @@ void make_VUIE_base(Base *base)
     base->createPoints = PRIVATE_DEFAULT_BASE_CREATE_POINTS;
 
     // Draw calling
-    base->draw = false;
+    base->draw = true;
     base->_draw = PRIVATE_DEFAULT_BASE_DRAW_CALLING;
 
     // Draw Children
-    base->drawChildren = false;
+    base->drawChildren = true;
     base->_drawChildren = PRIVATE_DEFAULT_BASE_DRAW_CHILDREN;
 
     // --- Process --- //
@@ -323,4 +356,10 @@ void PRIVATE_NODE_BASE_DRAW(Node *Node)
 void PRIVATE_NODE_BASE_PROCESS(Node *Node, void *args)
 {
     ((Base *)Node->element)->_process((Base *)Node->element, args);
+}
+
+void PRIVATE_NODE_BASE_ADD_PARENT(Node *node, Node *parent, void *pos)
+{
+    ((Base *)node->element)->setParent((Base *)node->element, parent);
+    Position_setParent(&((Base *)node->element)->transform.pos, (Position *)pos);
 }

@@ -13,6 +13,7 @@
             // Add
             void (*add)(struct Hierarchy *nodeDataStructure, Node *node);
             // Get
+            int (*getAmount)(struct Hierarchy *nodeDataStructure);
             Node *(*get)(struct Hierarchy *nodeDataStructure, int index);
             Node *(*getbyID)(struct Hierarchy *nodeDataStructure, int ID);
             // Remove
@@ -43,6 +44,7 @@ enum DataStructureType
 
 typedef struct Hierarchy
 {
+    Node *self;
     Node *parent;
 
     enum DataStructureType type;
@@ -52,17 +54,31 @@ typedef struct Hierarchy
     };
 
 } Hierarchy;
+
+int getChildAmount(Hierarchy *nodeDataStructure)
+{
+    switch (nodeDataStructure->type)
+    {
+    case ARRAY_TYPE:
+        return NodeArray_getNodeAmount(&nodeDataStructure->array);
+        break;
+
+    default:
+        break;
+    }
+}
+
 void setParent(Hierarchy *nodeDataStructure, Node *parent)
 {
     nodeDataStructure->parent = parent;
 }
 // Adds a child to the Hierarchy
-void addChild(Hierarchy *nodeDataStructure, Node *node)
+void addChild(Hierarchy *nodeDataStructure, Node *node, void *pos)
 {
     switch (nodeDataStructure->type)
     {
     case ARRAY_TYPE:
-        NodeArray_addNode(&nodeDataStructure->array, node);
+        NodeArray_addNode(&nodeDataStructure->array, node, nodeDataStructure->self, pos);
         break;
 
     default:
@@ -201,12 +217,12 @@ void callProcessByID(Hierarchy *nodeDataStructure, int ID, void *args)
     }
 }
 // Processes all the Hierarchy
-void processAll(Hierarchy *nodeDataStructure, void **args)
+void processAll(Hierarchy *nodeDataStructure, bool argB, void **args)
 {
     switch (nodeDataStructure->type)
     {
     case ARRAY_TYPE:
-        NodeArray_processAll(&nodeDataStructure->array, args);
+        NodeArray_processAll(&nodeDataStructure->array, argB, args);
         break;
 
     default:

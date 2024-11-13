@@ -1,4 +1,4 @@
-#include "Elements/Default_ElementCreators.h"
+#include "Elements/Element_Container.h"
 
 void VUIE_INIT()
 {
@@ -7,10 +7,13 @@ void VUIE_INIT()
     NodeFunctionsTemp[0].free = PRIVATE_NODE_BASE_FREE;
     NodeFunctionsTemp[0].draw = PRIVATE_NODE_BASE_DRAW;
     NodeFunctionsTemp[0].process = PRIVATE_NODE_BASE_PROCESS;
+    NodeFunctionsTemp[0].addParent = PRIVATE_NODE_BASE_ADD_PARENT;
 
     NodeFunctionsTemp[1].free = PRIVATE_NODE_CONTAINER_FREE;
     NodeFunctionsTemp[1].draw = PRIVATE_NODE_CONTAINER_DRAW;
     NodeFunctionsTemp[1].process = PRIVATE_NODE_CONTAINER_PROCESS;
+    NodeFunctionsTemp[1].addParent = PRIVATE_NODE_CONTAINER_ADD_PARENT;
 
     VUIE_inicializeNodeFunctions(NodeFunctionsTemp, 2);
+    inicializar_tabelas();
 }

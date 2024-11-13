@@ -13,11 +13,15 @@ typedef struct Container
 
     // ------------------ Hierachy ------------------
 
+    // self
+    Node *(*getSelf)(struct Container *);
+
     // Parent
     Node *(*getParent)(struct Container *);
     void (*setParent)(struct Container *, struct Node *);
 
     // Children
+    int (*getChildAmount)(struct Container *);
     void (*addChild)(struct Container *, struct Node *);
     void (*removeChild)(struct Container *, int);
     void (*removeChildByID)(struct Container *, int);
@@ -58,7 +62,7 @@ typedef struct Container
 
     // Children Process
     bool processChildren;
-    void (*_processChildren)(struct Container *, void **); // TODO
+    void (*_processChildren)(struct Container *, bool, void **); // TODO
 
     // ------------------ Functions ------------------
     // Erase Self
@@ -69,29 +73,49 @@ typedef struct Container
 // -------------------------------------------------- Container Functions -------------------------------------------------- //
 // ^                                                                                                                       ^ //
 
+void VUIE_DEBUGTOOL_PRINTPOINTS(Vector2 *points, int amount)
+{
+    printf("Amount : %d >> ", amount);
+
+    for (size_t i = 0; i < amount; i++)
+    {
+        printf("(%d, %d),", points[i].x, points[i].y);
+    }
+    printf("\n");
+}
+
 // Create the Container points --------------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_CONTAINER_CREATE_POINTS(Container *container)
 {
     if (container->transform.size.type == RECT_TYPE)
     {
-        container->pointCount = 2;
-        container->points = (Vector2 *)malloc(2 * sizeof(Vector2));
+        container->pointCount = 4;
+        container->points = (Vector2 *)malloc(4 * sizeof(Vector2));
 
-        definePos(&container->transform.pos, &container->points[0].x, &container->points[0].y);
+        Position_get(&container->transform.pos, &container->points[0].x, &container->points[0].y);
 
-        container->points[1].x = container->points[0].x + container->transform.size.rect.width;
-        container->points[1].y = container->points[0].y + container->transform.size.rect.height;
+        container->points[1].x = container->points[0].x + (container->transform.size.rect.width * window.PixelScale);
+        container->points[1].y = container->points[0].y;
+        //
+        container->points[2].x = container->points[1].x;
+        container->points[2].y = container->points[0].y + (container->transform.size.rect.height * window.PixelScale);
+        //
+        container->points[3].x = container->points[0].x;
+        container->points[3].y = container->points[2].y;
     }
     else if (container->transform.size.type == CIRC_TYPE)
     {
         container->pointCount = container->transform.size.circ.points;
         container->points = (Vector2 *)malloc(container->transform.size.circ.points * sizeof(Vector2));
 
-        int r = container->transform.size.circ.radius;
+        int r = container->transform.size.circ.radius * window.PixelScale;
         int theta = 360 / container->transform.size.circ.points;
         for (int i = 0; i < container->transform.size.circ.points; i++)
         {
             polarToCartesian(r, theta * i, &container->points[i].x, &container->points[i].y);
+            container->points[i].x += (container->transform.pos.Global.x + r);
+            container->points[i].y += (container->transform.pos.Global.y + r);
+            // printf("Point %d : (%d, %d)\n", i, container->points[i].x, container->points[i].y);
         }
     };
 }
@@ -129,22 +153,23 @@ void PRIVATE_DEFAULT_CONTAINER_DRAW_CALLING(Container *container)
     container->createPoints(container);
 
     // Draw Itself
-    printf("Container.drawSelf = %s\n", container->drawSelf ? "true" : "false");
+    // printf("Container.drawSelf = %s\n", container->drawSelf ? "true" : "false");
     if (container->drawSelf)
     {
-        printf("TEST\n");
+        // printf("TEST\n");
         container->_drawSelf(container);
     }
 
     // Cut outside of container
     // -------------------------------------------------
+
     glEnable(GL_SCISSOR_TEST);
 
-    int max_x;
-    int max_y;
-    int min_x;
-    int min_y;
-    for (size_t i = 0; i < container->pointCount; i++)
+    int max_x = container->points[0].x;
+    int max_y = container->points[0].y;
+    int min_x = container->points[0].x;
+    int min_y = container->points[0].y;
+    for (int i = 0; i < container->pointCount; i++)
     {
         if (container->points[i].x > max_x)
         {
@@ -164,11 +189,14 @@ void PRIVATE_DEFAULT_CONTAINER_DRAW_CALLING(Container *container)
         }
     }
 
-    glScissor(min_x, min_y, max_x, max_y);
+    glScissor(min_x + (*pixelScale / 2), min_y + (*pixelScale / 2), max_x - min_x, max_y - min_y);
     // -------------------------------------------------
 
+    // printf("Amount : %d \n", container->getChildAmount(container));
+
     // Draw Children
-    if (container->drawChildren)
+
+    if (container->drawChildren && !(container->getChildAmount(container) <= 0))
     {
         container->_drawChildren(container);
     }
@@ -197,6 +225,9 @@ void PRIVATE_DEFAULT_CONTAINER_DRAW_CHILDREN(Container *container)
 // Process calling for container // ---------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_CONTAINER_PROCESS_CALLING(Container *container, void *args)
 {
+
+    Position_process(&container->transform.pos);
+
     /*
 
         TODO : Add Processing Order
@@ -210,17 +241,17 @@ void PRIVATE_DEFAULT_CONTAINER_PROCESS_CALLING(Container *container, void *args)
     }
 
     // Process Children
-    if (container->processChildren)
+    if (container->processChildren && !(container->getChildAmount(container) <= 0))
     {
-        container->_processChildren(container, NULL);
+        container->_processChildren(container, false, NULL);
     }
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
 // Process children for container // --------------------------------------------------------------------------------------- //
-void PRIVATE_DEFAULT_CONTAINER_PROCESS_CHILDREN(Container *container, void **args)
+void PRIVATE_DEFAULT_CONTAINER_PROCESS_CHILDREN(Container *container, bool argB, void **args)
 {
-    processAll(&container->hierarchy, args);
+    processAll(&container->hierarchy, argB, args);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -234,7 +265,7 @@ void PRIVATE_DEFAULT_CONTAINER_FREE(Container *container)
 // Add node to container -------------------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_CONTAINER_ADD_CHILD(Container *container, Node *node)
 {
-    addChild(&container->hierarchy, node);
+    addChild(&container->hierarchy, node, (void *)&container->transform.pos);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -280,6 +311,20 @@ void PRIVATE_DEFAULT_CONTAINER_SET_PARENT(Container *container, Node *parent)
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
+// Get self Node from container -------------------------------------------------------------------------------------------- //
+Node *PRIVATE_DEFAULT_CONTAINER_GET_SELF(Container *container)
+{
+    return container->hierarchy.self;
+}
+// ------------------------------------------------------------------------------------------------------------------------- //
+
+// get Child amount from container ----------------------------------------------------------------------------------------- //
+int PRIVATE_DEFAULT_CONTAINER_GET_CHILD_AMOUNT(Container *container)
+{
+    return getChildAmount(&container->hierarchy);
+}
+// ------------------------------------------------------------------------------------------------------------------------- //
+
 // ------------------------------------------------------------------------------------------------------------------------- //
 
 // CREATORS :
@@ -295,12 +340,17 @@ void make_VUIE_Container(Container *container)
     setTransform(&container->transform, &PRIVATE_DEFAULT_POSITION, &PRIVATE_DEFAULT_SIZE);
 
     // --- Hierachy --- //
+    // Self Node
+    container->hierarchy.self = newNode(CONTAINER, container, container->info.ID);
+    container->getSelf = PRIVATE_DEFAULT_CONTAINER_GET_SELF;
+
     // Parent
     container->hierarchy.parent = NULL;
     container->getParent = PRIVATE_DEFAULT_CONTAINER_GET_PARENT;
     container->setParent = PRIVATE_DEFAULT_CONTAINER_SET_PARENT;
 
     // Children
+    container->getChildAmount = PRIVATE_DEFAULT_CONTAINER_GET_CHILD_AMOUNT;
     container->addChild = PRIVATE_DEFAULT_CONTAINER_ADD_CHILD;
     container->removeChild = PRIVATE_DEFAULT_CONTAINER_REMOVE_CHILD;
     container->removeChildByID = PRIVATE_DEFAULT_CONTAINER_REMOVE_CHILD_BY_ID;
@@ -315,12 +365,12 @@ void make_VUIE_Container(Container *container)
     container->createPoints = PRIVATE_DEFAULT_CONTAINER_CREATE_POINTS;
 
     // Colors
-    setColorByVal(&container->backgroundColor, RGB_TYPE, 0, 0, 0);
-    setColorByVal(&container->outlineColor, RGB_TYPE, 0, 0, 0);
+    setColorByVal(&container->backgroundColor, RGB_TYPE, 1.0, 0.0, 0.0);
+    setColorByVal(&container->outlineColor, RGB_TYPE, 0.0, 1.0, 1.0);
     container->setColors = PRIVATE_DEFAULT_CONTAINER_SET_COLORS;
 
     // Draw calling
-    container->draw = false;
+    container->draw = true;
     container->_draw = PRIVATE_DEFAULT_CONTAINER_DRAW_CALLING;
 
     // Draw Itself
@@ -328,7 +378,7 @@ void make_VUIE_Container(Container *container)
     container->_drawSelf = DEFAULT_CONTAINER_DRAW_FUNCTION;
 
     // Draw Children
-    container->drawChildren = false;
+    container->drawChildren = true;
     container->_drawChildren = PRIVATE_DEFAULT_CONTAINER_DRAW_CHILDREN;
 
     // --- Process --- //
@@ -340,7 +390,7 @@ void make_VUIE_Container(Container *container)
     container->_processSelf = NULL;
 
     // Children Process
-    container->processChildren = false;
+    container->processChildren = true;
     container->_processChildren = PRIVATE_DEFAULT_CONTAINER_PROCESS_CHILDREN;
 
     // --- Funtions --- //
@@ -365,6 +415,7 @@ void PRIVATE_NODE_CONTAINER_FREE(Node *Node)
 
 void PRIVATE_NODE_CONTAINER_DRAW(Node *Node)
 {
+    // printf("Node.COntainer Id: %d\n", ((Container *)Node->element)->info.ID);
     ((Container *)Node->element)->_draw((Container *)Node->element);
 }
 
@@ -372,3 +423,19 @@ void PRIVATE_NODE_CONTAINER_PROCESS(Node *Node, void *args)
 {
     ((Container *)Node->element)->_process((Container *)Node->element, args);
 }
+
+void PRIVATE_NODE_CONTAINER_ADD_PARENT(Node *node, Node *parent, void *pos)
+{
+    ((Container *)node->element)->setParent((Container *)node->element, parent);
+    Position_setParent(&((Container *)node->element)->transform.pos, (Position *)pos);
+}
+
+// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv //
+// --------------------------------------------------------- Saving --------------------------------------------------------- //
+// ^                                                                                                                        ^ //
+
+/*
+
+    TODO : Add saving and loading functions
+
+*/

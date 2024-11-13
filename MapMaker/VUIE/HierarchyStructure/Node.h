@@ -17,9 +17,15 @@ typedef struct NodeFunctions
     void (*free)(Node *);
     void (*draw)(Node *);
     void (*process)(Node *, void *);
+    void (*addParent)(Node *, Node *, void *);
+
 } NodeFunctions;
 
+// GLOBAL FUNCTIONS
+
 NodeFunctions *VUIE_GLOBAL_NODE_FUNCTIONS;
+
+// NODE FUNTIONS
 
 void VUIE_inicializeNodeFunctions(NodeFunctions *nodeFunctions, int amount)
 {
@@ -29,6 +35,7 @@ void VUIE_inicializeNodeFunctions(NodeFunctions *nodeFunctions, int amount)
         VUIE_GLOBAL_NODE_FUNCTIONS[i].free = nodeFunctions[i].free;
         VUIE_GLOBAL_NODE_FUNCTIONS[i].draw = nodeFunctions[i].draw;
         VUIE_GLOBAL_NODE_FUNCTIONS[i].process = nodeFunctions[i].process;
+        VUIE_GLOBAL_NODE_FUNCTIONS[i].addParent = nodeFunctions[i].addParent;
     }
 }
 
@@ -42,14 +49,14 @@ Node *newNode(enum elementType type, void *element, int ID)
 }
 void freeNode(Node *node)
 {
-    VUIE_GLOBAL_NODE_FUNCTIONS[node->type].free(node->element);
+    VUIE_GLOBAL_NODE_FUNCTIONS[node->type].free(node);
     free(node);
 }
 void NodeCallDraw(Node *node)
 {
-    VUIE_GLOBAL_NODE_FUNCTIONS[node->type].draw(node->element);
+    VUIE_GLOBAL_NODE_FUNCTIONS[node->type].draw(node);
 }
 void NodeCallProcess(Node *node, void *args)
 {
-    VUIE_GLOBAL_NODE_FUNCTIONS[node->type].process(node->element, args);
+    VUIE_GLOBAL_NODE_FUNCTIONS[node->type].process(node, args);
 }
