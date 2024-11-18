@@ -32,87 +32,6 @@
 #if !defined(DEBUG_PRINT_3)
 #define DEBUG_PRINT_3(fmt, args...) /* Don't do anything in release builds */
 #endif
-
-// <.------------------.>
-// #---------------------------------------------------------------------------------------------------------------#
-// <<<<<<<<<<' Global Variables '>>>>>>>>>>
-
-struct
-{
-    bool w;
-    bool s;
-} k;
-
-void startWindow(char *name)
-{
-    Draw_SetPixelScale(&window.PixelScale);
-    window.PixelScale = 10;
-    window.rawSize.width = 1600;
-    window.rawSize.height = 900;
-    window.size.width = window.rawSize.width / window.PixelScale;
-    window.size.height = window.rawSize.height / window.PixelScale;
-
-    Position_set(&window.pos, CARTESIAN_TYPE, 0, 0);
-
-    if (window.name != NULL)
-    {
-        free(window.name);
-    }
-    window.name = (char *)malloc((strlen(name) + 1) * sizeof(char));
-    strncpy(window.name, name, strlen(name) + 1);
-}
-
-// Mouse variables
-struct
-{
-    Position pos;
-
-    struct
-    {
-        int x;
-        int y;
-    } rawPos;
-
-    /*
-        struct
-        {
-            int x;
-            int y;
-        } pos;
-        struct
-        {
-            int x;
-            int y;
-        } windowPos;
-        struct
-        {
-            int x;
-            int y;
-        } rawPos;
-    */
-    bool leftButton;
-    bool rightButton;
-    bool middleButton;
-} mouse;
-
-void startMouse()
-{
-    Position_set(&mouse.pos, CARTESIAN_TYPE, 0, 0);
-    Position_setParent(&mouse.pos, &window.pos);
-
-    /*
-        mouse.pos.x = 0;
-        mouse.pos.y = 0;
-        mouse.rawPos.x = 0;
-        mouse.rawPos.y = 0;
-        mouse.windowPos.x = 0;
-        mouse.windowPos.y = 0;
-    */
-    mouse.leftButton = false;
-    mouse.rightButton = false;
-    mouse.middleButton = false;
-}
-
 // <.------------------.>
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' Inicialization '>>>>>>>>>>
@@ -154,10 +73,10 @@ void c2Init()
 
     printf("Inicializing Container2 Values...\n");
     Position_setParent(&c2.transform.pos, NULL);
-    Position_set(&c2.transform.pos, CARTESIAN_TYPE, 0, 0);
+    Position_set(&c2.transform.pos, CARTESIAN_TYPE, 15, 10);
     c2.setColors(&c2, RGBColor(0.0, 1.0, 0.0), RGBColor(1.0, 0.0, 1.0));
 
-    Size_set(&c2.transform.size, CIRC_TYPE, 14, 8, 1);
+    Size_set(&c2.transform.size, CIRC_TYPE, 14, 5, 1);
 
     // Size_set(&c2.transform.size, RECT_TYPE, 28, 28, 1);
 
@@ -188,38 +107,18 @@ void init()
 // <.----------------.>
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' Input '>>>>>>>>>>
+
 bool jpW = false;
 bool jpS = false;
-void mouseMotion(int x, int y)
-{
-    // Update the mouse position
-    mouse.rawPos.x = x;
-    mouse.rawPos.y = y;
-    x = (x + (window.PixelScale / 2)) / window.PixelScale;
-    y = (window.rawSize.height - (y - (window.PixelScale / 2))) / window.PixelScale;
-    Position_set(&mouse.pos, CARTESIAN_TYPE, x, y);
-    /*
-    mouse.windowPos.x = x;
-    mouse.windowPos.y = window.rawSize.height - y;
-    */
 
-    // Print the mouse position for debugging
-    DEBUG_PRINT_MOUSE("Mouse Position: (%d, %d)\n", mouse.pos.x, mouse.pos.y);
-    glutPostRedisplay(); // Request a redraw
-}
+// <.-----------------.>
+// #---------------------------------------------------------------------------------------------------------------#
+// <<<<<<<<<<' Display Funtion '>>>>>>>>>>
 
-// Idle function to continuously update the display
 void idle()
 {
     glutPostRedisplay(); // Request a redraw
 }
-
-// <.----------------.>
-// #---------------------------------------------------------------------------------------------------------------#
-// <<<<<<<<<<' UI '>>>>>>>>>>
-// <.-----------------.>
-// #---------------------------------------------------------------------------------------------------------------#
-// <<<<<<<<<<' Display Funtion '>>>>>>>>>>
 int delay = 0;
 bool conected = true;
 void display()
@@ -261,7 +160,7 @@ void display()
         conected = true;
     }
 
-    if (k.w && delay == 0)
+    if (keys.w && delay == 0)
     {
         jpW = true;
         window.PixelScale--;
@@ -270,7 +169,7 @@ void display()
         glLineWidth(window.PixelScale);
         delay = 10;
     }
-    else if (k.s && delay == 0)
+    else if (keys.s && delay == 0)
     {
         jpS = true;
         window.PixelScale++;
@@ -292,56 +191,6 @@ void display()
 // <.----------------.>
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' Main '>>>>>>>>>>
-void keysDown(unsigned char key, int x, int y)
-{
-    if (key == 'w' == 1)
-    {
-        k.w = true;
-    }
-    if (key == 's' == 1)
-    {
-        k.s = true;
-    }
-}
-
-void keysUp(unsigned char key, int x, int y)
-{
-    if (key == 'w' == 1)
-    {
-        k.w = false;
-    }
-    if (key == 's' == 1)
-    {
-        k.s = false;
-    }
-}
-
-void mouseBtn(int button, int state, int x, int y)
-{
-    if (button == GLUT_LEFT_BUTTON)
-    {
-        if (state == GLUT_DOWN)
-        {
-            mouse.leftButton = true;
-        }
-        else
-        {
-            mouse.leftButton = false;
-        }
-    }
-
-    if (button == GLUT_RIGHT_BUTTON)
-    {
-        if (state == GLUT_DOWN)
-        {
-            mouse.rightButton = true;
-        }
-        else
-        {
-            mouse.rightButton = false;
-        }
-    }
-}
 
 int main(int argc, char *argv[])
 {
