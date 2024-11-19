@@ -32,6 +32,7 @@
 #if !defined(DEBUG_PRINT_3)
 #define DEBUG_PRINT_3(fmt, args...) /* Don't do anything in release builds */
 #endif
+
 // <.------------------.>
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' Inicialization '>>>>>>>>>>
@@ -92,24 +93,12 @@ void c2Init()
 
 void init()
 {
-    VUIE_INIT();
-    printf("Inicialized\n");
-    startWindow("Map Maker");
-    startMouse();
-    glClearColor(0.0, 0.0, 0.0, 0.0); // Set the background color to black
 
+    printf("Inicialized\n");
     c2Init();
     containerInit();
-
     printf("Container Inicialized Succesfully!\n");
 }
-
-// <.----------------.>
-// #---------------------------------------------------------------------------------------------------------------#
-// <<<<<<<<<<' Input '>>>>>>>>>>
-
-bool jpW = false;
-bool jpS = false;
 
 // <.-----------------.>
 // #---------------------------------------------------------------------------------------------------------------#
@@ -121,6 +110,8 @@ void idle()
 }
 int delay = 0;
 bool conected = true;
+bool jpW = false;
+bool jpS = false;
 void display()
 {
     if (delay > 0)
@@ -199,22 +190,7 @@ int main(int argc, char *argv[])
     DEBUG_PRINT("Debugging is enabled.\n");
     DEBUG_PRINT("Debug level: %d", (int)DEBUG);
 
-    glEnable(GL_LINE_WIDTH);
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowPosition(0, 0);
-    glutInitWindowSize(window.rawSize.width, window.rawSize.height); //
-    glutCreateWindow(window.name);                                   //
-    glPointSize(window.PixelScale);                                  // pixel size
-    glLineWidth(window.PixelScale);                                  // line width
-    gluOrtho2D(0, window.rawSize.width, 0, window.rawSize.height);   // origin bottom left
-    glutDisplayFunc(display);                                        //
-    glutKeyboardFunc(keysDown);                                      //
-    glutKeyboardUpFunc(keysUp);                                      //
-    glutPassiveMotionFunc(mouseMotion);                              // Register the passive motion callback
-    glutMotionFunc(mouseMotion);                                     // Register the active motion callback
-    glutMouseFunc(mouseBtn);                                         //
-    glutIdleFunc(idle);                                              // Register the idle function
-    glutMainLoop();
+    VUIE_INIT(argc, argv);
+
     return 0;
 }

@@ -1,6 +1,6 @@
 #include "Input/mouse.h"
 
-void VUIE_INIT()
+void VUIE_INIT(int argc, char *argv[])
 {
     NodeFunctions NodeFunctionsTemp[2];
 
@@ -16,4 +16,18 @@ void VUIE_INIT()
 
     VUIE_inicializeNodeFunctions(NodeFunctionsTemp, 2);
     inicializar_tabelas();
+
+    //
+    glEnable(GL_LINE_WIDTH);
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+
+    //
+    startWindow("MapMaker");
+    glutDisplayFunc(display); //
+    startMouse();
+    glClearColor(0.0, 0.0, 0.0, 0.0); // Set the background color to black
+
+    glutIdleFunc(idle); // Register the idle function
+    glutMainLoop();
 }

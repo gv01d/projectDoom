@@ -34,6 +34,11 @@ void startMouse()
     mouse.leftButton = false;
     mouse.rightButton = false;
     mouse.middleButton = false;
+
+    //
+    glutPassiveMotionFunc(mouseMotion); // Register the passive motion callback
+    glutMotionFunc(mouseMotion);        // Register the active motion callback
+    glutMouseFunc(mouseBtn);            //
 }
 
 void mouseMotion(int x, int y)

@@ -38,3 +38,9 @@ void keysUp(unsigned char key, int x, int y)
         keys.s = false;
     }
 }
+
+void startKeyboard()
+{
+    glutKeyboardFunc(keysDown);
+    glutKeyboardUpFunc(keysUp);
+}

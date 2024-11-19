@@ -22,6 +22,7 @@ struct
 
 void startWindow(char *name)
 {
+    //
     Draw_SetPixelScale(&window.PixelScale);
     window.PixelScale = 10;
     window.rawSize.width = 1600;
@@ -37,4 +38,12 @@ void startWindow(char *name)
     }
     window.name = (char *)malloc((strlen(name) + 1) * sizeof(char));
     strncpy(window.name, name, strlen(name) + 1);
+
+    //
+    glutInitWindowPosition(0, 0);
+    glutInitWindowSize(window.rawSize.width, window.rawSize.height); //
+    glutCreateWindow(window.name);                                   //
+    glPointSize(window.PixelScale);                                  // pixel size
+    glLineWidth(window.PixelScale);                                  // line width
+    gluOrtho2D(0, window.rawSize.width, 0, window.rawSize.height);   // origin bottom left
 }
