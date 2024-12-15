@@ -415,7 +415,7 @@ void make_VUIE_Container(Container *container)
 
     // --- Hierachy --- //
     // Self Node
-    hierarchy_init(&container->hierarchy);
+    setDataStructure(&container->hierarchy, ARRAY_TYPE);
     container->hierarchy.self = newNode(CONTAINER, container, container->info.ID);
     container->getSelf = PRIVATE_DEFAULT_CONTAINER_GET_SELF;
 
