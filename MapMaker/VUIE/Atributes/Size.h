@@ -24,14 +24,20 @@ typedef struct Size // Define size
 void Size_setScale(Size *size, int scale) // Set scale
 {
     size->scale = scale;
-    if (size->afectedByParent)
+    if (size->afectedByParent && size->parentScale != NULL)
     {
         size->globalScale = *size->parentScale * scale;
     }
     else
     {
-        size->scale = scale;
+        size->globalScale = scale;
     }
+}
+
+void Size_setParent(Size *size, int *parentScale)
+{
+    size->afectedByParent = true;
+    size->parentScale = parentScale;
 }
 
 void Size_set(struct Size *size, enum SizeType type, int a, int b, int scale) // Set size
@@ -51,7 +57,7 @@ void Size_set(struct Size *size, enum SizeType type, int a, int b, int scale) //
         size->width = a * 2;
     }
 }
-void Size_copy(Size *size, Size *copy) // Copy size
+void Size_copy(struct Size *size, struct Size *copy) // Copy size
 {
     size->type = copy->type;
     size->scale = copy->scale;
@@ -63,5 +69,17 @@ void Size_copy(Size *size, Size *copy) // Copy size
     size->radius = copy->radius;
     size->points = copy->points;
 }
+
+void Size_process(struct Size *size)
+{
+    if (size->afectedByParent && size->parentScale != NULL)
+    {
+        size->globalScale = *size->parentScale * size->scale;
+    }
+    else
+    {
+        size->globalScale = size->scale;
+    }
+};
 
 Size PRIVATE_DEFAULT_SIZE = {RECT_TYPE, 0, 0};

@@ -1,4 +1,4 @@
-#include "Node.h"
+#include "Hierarchy.h"
 
 typedef struct NodeArray_DataStructure
 {
@@ -8,25 +8,30 @@ typedef struct NodeArray_DataStructure
 
 } NodeArray;
 
-int NodeArray_getNodeAmount(NodeArray *nodeArray)
+int NodeArray_getNodeAmount(void *dataStructure)
 {
-    return nodeArray->nodeAmount;
+    return ((NodeArray *)dataStructure)->nodeAmount;
 }
 
-void NodeArray_addNode(NodeArray *nodeArray, Node *node, Node *parent, void *pos)
+void NodeArray_addNode(void *dataStructure, Node *node, Node *parent, void *pos, void *scale)
 {
-    nodeArray->nodeAmount++;
-    nodeArray->node = (Node **)realloc(nodeArray->node, nodeArray->nodeAmount * sizeof(Node *));
-    nodeArray->node[nodeArray->nodeAmount - 1] = node;
-    VUIE_GLOBAL_NODE_FUNCTIONS[node->type].addParent(node, parent, pos);
+
+    ((NodeArray *)dataStructure)->nodeAmount++;
+    ((NodeArray *)dataStructure)->node = (Node **)realloc(((NodeArray *)dataStructure)->node, ((NodeArray *)dataStructure)->nodeAmount * sizeof(Node *));
+    ((NodeArray *)dataStructure)->node[((NodeArray *)dataStructure)->nodeAmount - 1] = node;
+    NodeAddParent(node, parent, pos, scale);
 }
-Node *NodeArray_getNode(NodeArray *nodeArray, int index)
+Node *NodeArray_getNode(void *dataStructure, int index)
 {
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
     return nodeArray->node[index];
 }
 
-Node *NodeArray_getNodebyID(NodeArray *nodeArray, int ID)
+Node *NodeArray_getNodebyID(void *dataStructure, int ID)
 {
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
     for (int i = 0; i < nodeArray->nodeAmount; i++)
     {
         if (nodeArray->node[i]->ID == ID)
@@ -36,8 +41,10 @@ Node *NodeArray_getNodebyID(NodeArray *nodeArray, int ID)
     }
 }
 
-void NodeArray_removeNode(NodeArray *nodeArray, int index)
+void NodeArray_removeNode(void *dataStructure, int index)
 {
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
     if (index < 0 || index >= nodeArray->nodeAmount)
     {
         printf("<WARNING> : Index out of bounds on removing node from nodeArray\n");
@@ -66,8 +73,10 @@ void NodeArray_removeNode(NodeArray *nodeArray, int index)
     }
 }
 
-void NodeArray_removeNodebyID(NodeArray *nodeArray, int ID)
+void NodeArray_removeNodebyID(void *dataStructure, int ID)
 {
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
     for (int i = 0; i < nodeArray->nodeAmount; i++)
     {
         if (nodeArray->node[i]->ID == ID)
@@ -77,8 +86,10 @@ void NodeArray_removeNodebyID(NodeArray *nodeArray, int ID)
         }
     }
 }
-void NodeArray_removeAll(NodeArray *nodeArray)
+void NodeArray_removeAll(void *dataStructure)
 {
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
     for (size_t i = 0; i < nodeArray->nodeAmount; i++)
     {
         freeNode(nodeArray->node[i]);
@@ -92,12 +103,16 @@ void NodeArray_removeAll(NodeArray *nodeArray)
     TODO : Add new parameters for the drawAll ,callDraw(filter) and callDrawByID(filter) that use Z ordering
 
 */
-void NodeArray_callDraw(NodeArray *nodeArray, int index)
+void NodeArray_callDraw(void *dataStructure, int index)
 {
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
     NodeCallDraw(nodeArray->node[index]);
 }
-void NodeArray_callDrawByID(NodeArray *nodeArray, int ID)
+void NodeArray_callDrawByID(void *dataStructure, int ID)
 {
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
     for (size_t i = 0; i < nodeArray->nodeAmount; i++)
     {
         if (nodeArray->node[i]->ID == ID)
@@ -108,8 +123,10 @@ void NodeArray_callDrawByID(NodeArray *nodeArray, int ID)
     }
 }
 
-void NodeArray_drawAll(NodeArray *nodeArray)
+void NodeArray_drawAll(void *dataStructure)
 {
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
     /*
     VUIE_GLOBAL_NODE_FUNCTIONS[1].draw(nodeArray->node[0]);
     printf("C2.ID = %d\n", ((Container *)nodeArray->node[0]->element)->info.ID);
@@ -120,12 +137,16 @@ void NodeArray_drawAll(NodeArray *nodeArray)
     }
 }
 
-void NodeArray_callProcess(NodeArray *nodeArray, int index, void *args)
+void NodeArray_callProcess(void *dataStructure, int index, void *args)
 {
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
     NodeCallProcess(nodeArray->node[index], args);
 }
-void NodeArray_callProcessByID(NodeArray *nodeArray, int ID, void *args)
+void NodeArray_callProcessByID(void *dataStructure, int ID, void *args)
 {
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
     for (size_t i = 0; i < nodeArray->nodeAmount; i++)
     {
         if (nodeArray->node[i]->ID == ID)
@@ -135,9 +156,11 @@ void NodeArray_callProcessByID(NodeArray *nodeArray, int ID, void *args)
         }
     }
 }
-void NodeArray_processAll(NodeArray *nodeArray, bool argB, void **args)
+void NodeArray_processAll(void *dataStructure, bool argB, void **args)
 {
-    if (args)
+    NodeArray *nodeArray = (NodeArray *)dataStructure;
+
+    if (argB && args != NULL)
     {
         for (int i = 0; i < nodeArray->nodeAmount; i++)
         {
@@ -149,4 +172,44 @@ void NodeArray_processAll(NodeArray *nodeArray, bool argB, void **args)
     {
         NodeCallProcess(nodeArray->node[i], NULL);
     }
+}
+
+void NodeArray_Init(void *hierarchy)
+{
+    NodeArray *newNdAr = (NodeArray *)malloc(sizeof(NodeArray));
+
+    newNdAr->nodeAmount = 0;
+    newNdAr->node = NULL;
+    ((Hierarchy *)hierarchy)->dataStructure = (void *)newNdAr;
+}
+
+// ------------------------------------------------------------------------------------------------------------
+// Data structure functions
+
+DataStructure PRIVATE_NODEARRAY_INIT()
+{
+    DataStructure PRIVATE_NODEARRAY_DATASTRUCTURE;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.type = ARRAY_TYPE;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.name = "NodeArray";
+
+    PRIVATE_NODEARRAY_DATASTRUCTURE.add = NodeArray_addNode;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.getAmount = NodeArray_getNodeAmount;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.get = NodeArray_getNode;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.getbyID = NodeArray_getNodebyID;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.remove = NodeArray_removeNode;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.removebyID = NodeArray_removeNodebyID;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.removeAll = NodeArray_removeAll;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.callDraw = NodeArray_drawAll;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.callDrawByID = NodeArray_callDrawByID;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.callDrawAboveZ = NULL;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.callDrawZ = NULL;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.callDrawBelowZ = NULL;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.drawAll = NodeArray_drawAll;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.callProcess = NodeArray_callProcess;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.callProcessByID = NodeArray_callProcessByID;
+    PRIVATE_NODEARRAY_DATASTRUCTURE.processAll = NodeArray_processAll;
+
+    PRIVATE_NODEARRAY_DATASTRUCTURE.init = NodeArray_Init;
+
+    return PRIVATE_NODEARRAY_DATASTRUCTURE;
 }

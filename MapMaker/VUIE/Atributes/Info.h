@@ -6,6 +6,7 @@ int GlobalNextID = 0;
 typedef struct Info
 {
     int ID;
+    char *name;
 
 } Private_Info;
 void setInfo(Private_Info *info, int ID)

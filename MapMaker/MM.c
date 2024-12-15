@@ -3,104 +3,69 @@
 
 #include "VUIE/vuie.h"
 
-// <<<<<<<<<<' Debug '>>>>>>>>>>
-
-#define DEBUG 1
-
-#if defined(DEBUG) && DEBUG > 0
-#define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
-                                          __FILE__, __LINE__, __func__, ##args)
-#if DEBUG == 2
-#define DEBUG_PRINT_MOUSE(fmt, args...) fprintf(stderr, "DB_MOUSE: %s:%d:%s(): " fmt, \
-                                                __FILE__, __LINE__, __func__, ##args)
-#elif DEBUG == 3
-#define DEBUG_PRINT_3(fmt, args...) fprintf(stderr, "DB_2: %s:%d:%s(): " fmt, \
-                                            __FILE__, __LINE__, __func__, ##args)
-#elif DEBUG == 5
-#define DEBUG_PRINT_MOUSE(fmt, args...) fprintf(stderr, "DB_MOUSE: %s:%d:%s(): " fmt, \
-                                                __FILE__, __LINE__, __func__, ##args)
-#define DEBUG_PRINT_3(fmt, args...) fprintf(stderr, "DB_2: %s:%d:%s(): " fmt, \
-                                            __FILE__, __LINE__, __func__, ##args)
-#endif
-#endif
-#if !defined(DEBUG_PRINT)
-#define DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
-#endif
-#if !defined(DEBUG_PRINT_MOUSE)
-#define DEBUG_PRINT_MOUSE(fmt, args...) /* Don't do anything in release builds */
-#endif
-#if !defined(DEBUG_PRINT_3)
-#define DEBUG_PRINT_3(fmt, args...) /* Don't do anything in release builds */
-#endif
-
-// <.------------------.>
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' Inicialization '>>>>>>>>>>
 
+Window mainWindow;
 Container exampleBox;
+Container example2;
 Container c2;
 
-void containerInit()
+void startWindow(struct Window *window)
 {
-    printf("Inicializing Container...\n");
-    make_VUIE_Container(&exampleBox);
+    printf("Starting Window...\n");
+    make_VUIE_Window(window, "MapMaker");
 
-    printf("Inicializing Container Values...\n");
-    Position_setParent(&exampleBox.transform.pos, &mouse.pos);
-    Position_set(&exampleBox.transform.pos, CARTESIAN_TYPE, 0, 0);
+    window->GlobalScale = 10;
+    window->rawSize.width = 1600;
+    window->rawSize.height = 900;
 
-    Size_set(&exampleBox.transform.size, RECT_TYPE, 30, 30, 1);
+    window->size.width = window->rawSize.width / window->GlobalScale;
+    window->size.height = window->rawSize.height / window->GlobalScale;
 
-    exampleBox.outlineWidth = 0;
+    window->pos.x = 0;
+    window->pos.y = 0;
 
-    exampleBox.draw = true;
-    exampleBox.drawSelf = true;
-
-    exampleBox.drawChildren = true;
-
-    exampleBox.addChild(&exampleBox, c2.getSelf(&c2));
-    c2.transform.pos.ReferToParent = true;
-
-    // Node *Test = exampleBox.getChild(&exampleBox, 0);
-    // ((Container *)Test->element)->_draw((Container *)Test->element);
-
-    // printf("exBox.ID = %d\n", ((Container *)Test->element)->info.ID);
+    window->setOffsetByType(window, MIDDLE);
 }
 
+void example2Init()
+{
+    make_VUIE_Container(&example2);
+
+    Position_set(&example2.transform.pos, CARTESIAN_TYPE, -20, -20);
+    Size_set(&example2.transform.size, RECT_TYPE, 10, 10, 1);
+
+    example2.setColors(&example2, RGBColor(0.1, 0.1, 1.0), RGBColor(1, 1, 1));
+    example2.outlineWidth = 3;
+}
+//
+void containerInit()
+{
+    make_VUIE_Container(&exampleBox);
+
+    Position_setParent(&exampleBox.transform.pos, &mouse.pos);
+    Position_set(&exampleBox.transform.pos, CARTESIAN_TYPE, 0, 0);
+    Size_set(&exampleBox.transform.size, RECT_TYPE, 50, 50, 1);
+
+    exampleBox.addChild(&exampleBox, c2.getSelf(&c2));
+    c2.transform.pos.ReferToParent = false;
+}
+//
 void c2Init()
 {
-    printf("Inicializing Container2...\n");
     make_VUIE_Container(&c2);
 
-    printf("Inicializing Container2 Values...\n");
     Position_setParent(&c2.transform.pos, NULL);
-    Position_set(&c2.transform.pos, CARTESIAN_TYPE, 15, 10);
+    Position_set(&c2.transform.pos, CARTESIAN_TYPE, 0, 0);
     c2.setColors(&c2, RGBColor(0.0, 1.0, 0.0), RGBColor(1.0, 0.0, 1.0));
 
     Size_set(&c2.transform.size, CIRC_TYPE, 14, 5, 1);
-
     // Size_set(&c2.transform.size, RECT_TYPE, 28, 28, 1);
-
-    c2.outlineWidth = 0;
-
-    c2.draw = true;
-    c2.drawSelf = true;
-
-    Node *test = c2.getSelf(&c2);
-
-    printf("C2.ID = %d\n", ((Container *)test->element)->info.ID);
 }
 
-void init()
-{
+//
 
-    printf("Inicialized\n");
-    c2Init();
-    containerInit();
-    printf("Container Inicialized Succesfully!\n");
-}
-
-// <.-----------------.>
 // #---------------------------------------------------------------------------------------------------------------#
 // <<<<<<<<<<' Display Funtion '>>>>>>>>>>
 
@@ -112,33 +77,29 @@ int delay = 0;
 bool conected = true;
 bool jpW = false;
 bool jpS = false;
-void display()
+void keyControls()
 {
     if (delay > 0)
     {
 
         delay--;
     }
+    if (keys.w && delay <= 0)
+    {
+        jpW = true;
+        mainWindow.setScale(&mainWindow, mainWindow.GlobalScale - 1);
+        delay = 10;
+    }
+    else if (keys.s && delay <= 0)
+    {
+        jpS = true;
+        mainWindow.setScale(&mainWindow, mainWindow.GlobalScale + 1);
+        delay = 10;
+    }
+}
 
-    glClear(GL_COLOR_BUFFER_BIT); // Clear the screen
-    Position_process(&mouse.pos);
-    // printf("mouse.global.pos : (%d, %d)\n", mouse.pos.Global.x, mouse.pos.Global.y);
-    Position_process(&exampleBox.transform.pos);
-    // printf("exampleBox.global.pos : (%d, %d) | Refering? : %d\n", exampleBox.transform.pos.Global.x, exampleBox.transform.pos.Global.y, exampleBox.transform.pos.ReferToParent);
-
-    exampleBox._process(&exampleBox, NULL);
-    exampleBox._draw(&exampleBox);
-    // c2._draw(&c2);
-    printf("Positions: ExBox : (%d, %d) | C2 : (%d, %d) | scale : (%d)\n", exampleBox.transform.pos.Global.x, exampleBox.transform.pos.Global.y, c2.transform.pos.Global.x, c2.transform.pos.Global.y, window.PixelScale);
-    printf("C2.Points (4) : (%d, %d) | (%d, %d) | (%d, %d) | (%d, %d)\n", c2.points[0].x, c2.points[0].y, c2.points[1].x, c2.points[1].y, c2.points[2].x, c2.points[2].y, c2.points[3].x, c2.points[3].y);
-
-    // Node *Test = exampleBox.getChild(&exampleBox, 0);
-    //((Container *)Test->element)->_draw((Container *)Test->element);
-
-    // VUIE_GLOBAL_NODE_FUNCTIONS[1].draw(Test);
-    //  PRIVATE_NODE_CONTAINER_DRAW(Test);
-
-    // Draw a point at the mouse position
+void mouseControls()
+{
     if (mouse.leftButton && conected)
     {
         printf("Disconect\n");
@@ -150,33 +111,41 @@ void display()
         Position_setParent(&exampleBox.transform.pos, &mouse.pos);
         conected = true;
     }
+}
 
-    if (keys.w && delay == 0)
-    {
-        jpW = true;
-        window.PixelScale--;
-        printf("PixelScale-- : %d\n", window.PixelScale);
-        glPointSize(window.PixelScale); // pixel size
-        glLineWidth(window.PixelScale);
-        delay = 10;
-    }
-    else if (keys.s && delay == 0)
-    {
-        jpS = true;
-        window.PixelScale++;
-        printf("PixelScale++ : %d\n", window.PixelScale);
-        glPointSize(window.PixelScale); // pixel size
-        glLineWidth(window.PixelScale);
-        delay = 10;
-    }
+void display(struct Window *window, void *args)
+{
+    printf("Displaying...\n");
 
-    glColor3f(1.0, 1.0, 1.0); // Set the color to red
-    glBegin(GL_POINTS);
-    glVertex2i(40 * window.PixelScale, 40 * window.PixelScale);
-    glVertex2i(mouse.pos.x * window.PixelScale, mouse.pos.y * window.PixelScale);
-    glEnd();
+    mouseControls();
+    keyControls();
 
-    glutSwapBuffers(); // Swap the buffers to display the scene
+    Vector2 points[10] = {
+        {mouse.pos.x, mouse.pos.y},
+        {0, 0},
+        {50, 0},
+        {50, 30},
+        {0, 30},
+        {-50, 0},
+        {-50, -30},
+        {0, -30},
+        {50, -30},
+        {-50, 30}};
+
+    Draw_Pixels(10, points, RGBColor(1.0, 1.0, 1.0), 1);
+
+    /*
+        Draw_pixel(mouse.pos.x, mouse.pos.y, RGBColor(1.0, 1.0, 1.0), 1);
+        Draw_pixel(0, 0, RGBColor(1.0, 1.0, 1.0), 1);
+        Draw_pixel(50, 0, RGBColor(1.0, 1.0, 1.0), 1);
+        Draw_pixel(50, 30, RGBColor(1.0, 1.0, 1.0), 1);
+        Draw_pixel(0, 30, RGBColor(1.0, 1.0, 1.0), 1);
+        Draw_pixel(-50, 0, RGBColor(1.0, 1.0, 1.0), 1);
+        Draw_pixel(-50, -30, RGBColor(1.0, 1.0, 1.0), 1);
+        Draw_pixel(0, -30, RGBColor(1.0, 1.0, 1.0), 1);
+        Draw_pixel(50, -30, RGBColor(1.0, 1.0, 1.0), 1);
+        Draw_pixel(-50, 30, RGBColor(1.0, 1.0, 1.0), 1);
+    */
 }
 
 // <.----------------.>
@@ -185,12 +154,26 @@ void display()
 
 int main(int argc, char *argv[])
 {
+    VUIE_INIT();
 
-    init();
-    DEBUG_PRINT("Debugging is enabled.\n");
-    DEBUG_PRINT("Debug level: %d", (int)DEBUG);
+    startWindow(&mainWindow);
 
-    VUIE_INIT(argc, argv);
+    VUIE_INIT_MAIN_WINDOW(&mainWindow);
+    VUIE_WINDOW_INIT(argc, argv);
+
+    printf("Inicialized\n");
+
+    // Inicializing Containers
+    c2Init();
+    example2Init();
+    containerInit();
+
+    VUIE_ADD_ELEMENT(exampleBox.getSelf(&exampleBox));
+    VUIE_ADD_ELEMENT(example2.getSelf(&example2));
+
+    printf("Container Inicialized Succesfully!\n");
+
+    VUIE_PROCESS(idle, display);
 
     return 0;
 }

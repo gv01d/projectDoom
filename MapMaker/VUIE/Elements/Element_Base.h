@@ -1,7 +1,4 @@
-#include "../Atributes/Transform.h"
-#include "../Atributes/Info.h"
-#include "../Render/Draw.h"
-#include "../HierarchyStructure/Hierarchy.h"
+#include "../window.h"
 
 typedef struct Base // Define base
 {
@@ -42,6 +39,8 @@ typedef struct Base // Define base
     bool draw;
     void (*_draw)(struct Base *); //
 
+    void (*_renderFunction)(struct Base *, void *); // Set by user
+
     // Draw Children
     bool drawChildren;
     void (*_drawChildren)(struct Base *); //
@@ -66,46 +65,68 @@ typedef struct Base // Define base
 // -------------------------------------------------- Container Functions -------------------------------------------------- //
 // ^                                                                                                                       ^ //
 
-// Create points for container --------------------------------------------------------------------------------------------- //
+// Create points for base --------------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_BASE_CREATE_POINTS(Base *base)
 {
     int scale = base->transform.size.globalScale;
+    int posX, posY;
+    Position_get(&base->transform.pos, &posX, &posY);
+
+    // posX = (posX + ((sign(posX) * scale) / 2)) * scale;
+    posX = posX * scale;
+    // posY = (posY + ((sign(posY) * scale) / 2)) * scale;
+    posY = posY * scale;
+
+    float OriginX = -0.5;
+    float OriginY = -0.5;
+    float OriginX2 = 0.5;
+    float OriginY2 = 0.5;
+
+    // printf("\n---------------------------------\nID : %d\n", base->info.ID);
     if (base->transform.size.type == RECT_TYPE)
     {
         base->pointCount = 4;
         base->points = (Vector2 *)realloc(base->points, 4 * sizeof(Vector2));
 
-        Position_get(&base->transform.pos, &base->points[0].x, &base->points[0].y);
-        int w = (base->transform.size.width / 2) * scale;
-        int h = (base->transform.size.height / 2) * scale;
+        // Position_get(&base->transform.pos, &base->points[0].x, &base->points[0].y);
+        int w = base->transform.size.width * scale;
+        int h = base->transform.size.height * scale;
 
-        base->points[1].x = base->points[0].x + w;
-        base->points[2].y = base->points[0].y + h;
+        base->points[0].x = posX + (w * OriginX);
+        base->points[0].y = posY + (h * OriginY);
+
+        base->points[1].x = posX + (w * OriginX);
+        base->points[1].y = posY + (h * OriginY2);
         //
-        base->points[0].x -= w;
-        base->points[0].y -= h;
+        base->points[2].x = posX + (w * OriginX2);
+        base->points[2].y = posY + (h * OriginY2);
         //
-        base->points[1].y = base->points[0].y;
-        //
-        base->points[2].x = base->points[1].x;
-        //
-        base->points[3].x = base->points[0].x;
-        base->points[3].y = base->points[2].y;
+        base->points[3].x = posX + (w * OriginX2);
+        base->points[3].y = posY + (h * OriginY);
+
+        // printf("pos : (%d, %d) | size : (%d, %d)\n", base->transform.pos.Global.x, base->transform.pos.Global.y, base->transform.size.width, base->transform.size.height);
+        // printf("Point (4) : (%d, %d) | (%d, %d) | (%d, %d) | (%d, %d)\n", base->points[0].x, base->points[0].y, base->points[1].x, base->points[1].y, base->points[2].x, base->points[2].y, base->points[3].x, base->points[3].y);
     }
     else if (base->transform.size.type == CIRC_TYPE)
     {
+        OriginX -= -0.5; // Default Origin for Circle
+        OriginY -= -0.5; //
+        OriginX2 -= 0.5; //
+        OriginY2 -= 0.5; //
+
         base->pointCount = base->transform.size.points;
         base->points = (Vector2 *)realloc(base->points, base->transform.size.points * sizeof(Vector2));
 
-        int r = base->transform.size.radius;
+        int r = base->transform.size.radius * scale;
         int theta = 360 / base->transform.size.points;
         for (int i = 0; i < base->transform.size.points; i++)
         {
             polarToCartesian(r, theta * i, &base->points[i].x, &base->points[i].y);
-            base->points[i].x += base->transform.pos.Global.x;
-            base->points[i].y += base->transform.pos.Global.y;
+            base->points[i].x += (base->transform.pos.Global.x + (r * OriginX));
+            base->points[i].y += (base->transform.pos.Global.y + (r * OriginY));
+            // printf("Point %d : (%d, %d)\n", i, base->points[i].x, base->points[i].y);
         }
-    };
+    }
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -127,6 +148,11 @@ void PRIVATE_DEFAULT_BASE_DRAW_CALLING(Base *base)
 
     // Create points
     base->createPoints(base);
+
+    if (base->_renderFunction != NULL)
+    {
+        base->_renderFunction(base, NULL);
+    }
 
     // Cut outside of base
     // -------------------------------------------------
@@ -155,8 +181,30 @@ void PRIVATE_DEFAULT_BASE_DRAW_CALLING(Base *base)
             min_y = base->points[i].y;
         }
     }
+    bool cutBackup = false;
+    glScissorSaveState backupGlScissor;
 
-    glScissor(min_x, min_y, max_x, max_y);
+    if (glScissorEnabled)
+    {
+        backupGlScissor.x = globalGlScissor.x;
+        backupGlScissor.y = globalGlScissor.y;
+        backupGlScissor.width = globalGlScissor.width;
+        backupGlScissor.height = globalGlScissor.height;
+        backupGlScissor.scale = globalGlScissor.scale;
+
+        scissorsIntercection(&globalGlScissor, min_x, backupGlScissor.x, (max_x - min_x), backupGlScissor.width, min_y, backupGlScissor.y, (max_y - min_y), backupGlScissor.height);
+    }
+    else
+    {
+        globalGlScissor.x = min_x;
+        globalGlScissor.y = min_y;
+        globalGlScissor.width = (max_x - min_x);
+        globalGlScissor.height = (max_y - min_y);
+        globalGlScissor.scale = base->transform.size.scale;
+        glScissorEnabled = true;
+    }
+
+    GL_Scissors(globalGlScissor.x, globalGlScissor.y, globalGlScissor.width, globalGlScissor.height, globalGlScissor.scale);
     // -------------------------------------------------
 
     // Draw Children
@@ -165,8 +213,15 @@ void PRIVATE_DEFAULT_BASE_DRAW_CALLING(Base *base)
         base->_drawChildren(base);
     }
 
-    // End cut
-    glDisable(GL_SCISSOR_TEST);
+    if (cutBackup)
+    {
+        GL_Scissors(backupGlScissor.x, backupGlScissor.y, backupGlScissor.width, backupGlScissor.height, globalGlScissor.scale);
+    }
+    else
+    {
+        glScissorEnabled = false;
+        glDisable(GL_SCISSOR_TEST);
+    }
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -210,14 +265,16 @@ void PRIVATE_DEFAULT_BASE_PROCESS_CHILDREN(Base *base, bool argB, void **args)
 // Free the base ----------------------------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_BASE_FREE(Base *base)
 {
+    free(base->info.name);
     free(base->points);
+    freeHierarchy(&base->hierarchy);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
 // Add node to base -------------------------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_BASE_ADD_CHILD(Base *base, Node *node)
 {
-    addChild(&base->hierarchy, node, (void *)&base->transform.pos);
+    addChild(&base->hierarchy, node, (void *)&base->transform.pos, (void *)&base->transform.size.globalScale);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -293,6 +350,7 @@ void make_VUIE_base(Base *base)
 
     // --- Hierachy --- //
     // Self Node
+    hierarchy_init(&base->hierarchy);
     base->hierarchy.self = newNode(BASE, base, base->info.ID);
     base->getSelf = PRIVATE_DEFAULT_BASE_GET_SELF;
 
@@ -318,6 +376,8 @@ void make_VUIE_base(Base *base)
     // Draw calling
     base->draw = true;
     base->_draw = PRIVATE_DEFAULT_BASE_DRAW_CALLING;
+
+    base->_renderFunction = NULL;
 
     // Draw Children
     base->drawChildren = true;
@@ -365,8 +425,21 @@ void PRIVATE_NODE_BASE_PROCESS(Node *Node, void *args)
     ((Base *)Node->element)->_process((Base *)Node->element, args);
 }
 
-void PRIVATE_NODE_BASE_ADD_PARENT(Node *node, Node *parent, void *pos)
+void PRIVATE_NODE_BASE_ADD_PARENT(Node *node, Node *parent, void *pos, void *scale)
 {
     ((Base *)node->element)->setParent((Base *)node->element, parent);
     Position_setParent(&((Base *)node->element)->transform.pos, (Position *)pos);
+    Size_setParent(&((Base *)node->element)->transform.size, (int *)scale);
+}
+
+NodeFunctions PRIVATE_BASE_NODE_FUNTIONS_INIT()
+{
+    NodeFunctions NodeFunctionsTemp;
+
+    NodeFunctionsTemp.free = PRIVATE_NODE_BASE_FREE;
+    NodeFunctionsTemp.draw = PRIVATE_NODE_BASE_DRAW;
+    NodeFunctionsTemp.process = PRIVATE_NODE_BASE_PROCESS;
+    NodeFunctionsTemp.addParent = PRIVATE_NODE_BASE_ADD_PARENT;
+
+    return NodeFunctionsTemp;
 }

@@ -42,11 +42,13 @@ typedef struct Container
 
     // Draw calling
     bool draw;
+    bool cutOutSide;
     void (*_draw)(struct Container *); // PRIVATE_DEFAULT_CONTAINER_DRAW_CALLING : Done
 
     // Draw Itself
     bool drawSelf;
-    void (*_drawSelf)(struct Container *); // Set by user | Use drawPolygon
+    void (*_drawSelf)(struct Container *);               // Set by user | Use drawPolygon
+    void (*_renderFunction)(struct Container *, void *); // Set by user
 
     // Draw Children
     bool drawChildren;
@@ -88,34 +90,51 @@ void VUIE_DEBUGTOOL_PRINTPOINTS(Vector2 *points, int amount)
 void PRIVATE_DEFAULT_CONTAINER_CREATE_POINTS(Container *container)
 {
     int scale = container->transform.size.globalScale;
-    printf("ID : %d\n", container->info.ID);
+    int posX, posY;
+    Position_get(&container->transform.pos, &posX, &posY);
+
+    // posX = (posX + ((sign(posX) * scale) / 2)) * scale;
+    posX = posX * scale;
+    // posY = (posY + ((sign(posY) * scale) / 2)) * scale;
+    posY = posY * scale;
+
+    float OriginX = -0.5;
+    float OriginY = -0.5;
+    float OriginX2 = 0.5;
+    float OriginY2 = 0.5;
+
+    // printf("\n---------------------------------\nID : %d\n", container->info.ID);
     if (container->transform.size.type == RECT_TYPE)
     {
         container->pointCount = 4;
         container->points = (Vector2 *)realloc(container->points, 4 * sizeof(Vector2));
 
-        Position_get(&container->transform.pos, &container->points[0].x, &container->points[0].y);
-        int w = (container->transform.size.width / 2) * scale;
-        int h = (container->transform.size.height / 2) * scale;
+        // Position_get(&container->transform.pos, &container->points[0].x, &container->points[0].y);
+        int w = container->transform.size.width * scale;
+        int h = container->transform.size.height * scale;
 
-        container->points[1].x = container->points[0].x + w;
-        container->points[2].y = container->points[0].y + h;
-        //
-        container->points[0].x -= w;
-        container->points[0].y -= h;
-        //
-        container->points[1].y = container->points[0].y;
-        //
-        container->points[2].x = container->points[1].x;
-        //
-        container->points[3].x = container->points[0].x;
-        container->points[3].y = container->points[2].y;
+        container->points[0].x = posX + (w * OriginX);
+        container->points[0].y = posY + (h * OriginY);
 
-        printf("pos : (%d, %d) | size : (%d, %d)\n", container->transform.pos.Global.x, container->transform.pos.Global.y, container->transform.size.width, container->transform.size.height);
-        printf("Point (4) : (%d, %d) | (%d, %d) | (%d, %d) | (%d, %d)\n", container->points[0].x, container->points[0].y, container->points[1].x, container->points[1].y, container->points[2].x, container->points[2].y, container->points[3].x, container->points[3].y);
+        container->points[1].x = posX + (w * OriginX);
+        container->points[1].y = posY + (h * OriginY2);
+        //
+        container->points[2].x = posX + (w * OriginX2);
+        container->points[2].y = posY + (h * OriginY2);
+        //
+        container->points[3].x = posX + (w * OriginX2);
+        container->points[3].y = posY + (h * OriginY);
+
+        // printf("pos : (%d, %d) | size : (%d, %d)\n", container->transform.pos.Global.x, container->transform.pos.Global.y, container->transform.size.width, container->transform.size.height);
+        // printf("Point (4) : (%d, %d) | (%d, %d) | (%d, %d) | (%d, %d)\n", container->points[0].x, container->points[0].y, container->points[1].x, container->points[1].y, container->points[2].x, container->points[2].y, container->points[3].x, container->points[3].y);
     }
     else if (container->transform.size.type == CIRC_TYPE)
     {
+        OriginX -= -0.5; // Default Origin for Circle
+        OriginY -= -0.5; //
+        OriginX2 -= 0.5; //
+        OriginY2 -= 0.5; //
+
         container->pointCount = container->transform.size.points;
         container->points = (Vector2 *)realloc(container->points, container->transform.size.points * sizeof(Vector2));
 
@@ -124,11 +143,11 @@ void PRIVATE_DEFAULT_CONTAINER_CREATE_POINTS(Container *container)
         for (int i = 0; i < container->transform.size.points; i++)
         {
             polarToCartesian(r, theta * i, &container->points[i].x, &container->points[i].y);
-            container->points[i].x += (container->transform.pos.Global.x);
-            container->points[i].y += (container->transform.pos.Global.y);
-            printf("Point %d : (%d, %d)\n", i, container->points[i].x, container->points[i].y);
+            container->points[i].x += (posX + (r * OriginX));
+            container->points[i].y += (posY + (r * OriginY));
+            // printf("Point %d : (%d, %d)\n", i, container->points[i].x, container->points[i].y);
         }
-    };
+    }
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -200,7 +219,34 @@ void PRIVATE_DEFAULT_CONTAINER_DRAW_CALLING(Container *container)
         }
     }
 
-    glScissor(min_x * window.PixelScale + (*pixelScale / 2), min_y * window.PixelScale + (*pixelScale / 2), (max_x - min_x) * window.PixelScale, (max_y - min_y) * window.PixelScale);
+    bool cutBackup = false;
+    glScissorSaveState backupGlScissor;
+
+    if (glScissorEnabled)
+    {
+        backupGlScissor.x = globalGlScissor.x;
+        backupGlScissor.y = globalGlScissor.y;
+        backupGlScissor.width = globalGlScissor.width;
+        backupGlScissor.height = globalGlScissor.height;
+        backupGlScissor.scale = globalGlScissor.scale;
+
+        scissorsIntercection(&globalGlScissor, min_x, backupGlScissor.x, (max_x - min_x), backupGlScissor.width, min_y, backupGlScissor.y, (max_y - min_y), backupGlScissor.height);
+    }
+    else
+    {
+        globalGlScissor.x = min_x;
+        globalGlScissor.y = min_y;
+        globalGlScissor.width = (max_x - min_x);
+        globalGlScissor.height = (max_y - min_y);
+        globalGlScissor.scale = container->transform.size.globalScale;
+        glScissorEnabled = true;
+    }
+
+    if (container->cutOutSide)
+    {
+        GL_Scissors(globalGlScissor.x, globalGlScissor.y, globalGlScissor.width, globalGlScissor.height, globalGlScissor.scale);
+    }
+
     // -------------------------------------------------
 
     // printf("Amount : %d \n", container->getChildAmount(container));
@@ -213,15 +259,28 @@ void PRIVATE_DEFAULT_CONTAINER_DRAW_CALLING(Container *container)
     }
 
     // End cut
-    glDisable(GL_SCISSOR_TEST);
+
+    if (cutBackup)
+    {
+        GL_Scissors(backupGlScissor.x, backupGlScissor.y, backupGlScissor.width, backupGlScissor.height, backupGlScissor.scale);
+    }
+    else
+    {
+        glScissorEnabled = false;
+        glDisable(GL_SCISSOR_TEST);
+    }
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
 // Default draw function for container ------------------------------------------------------------------------------------- //
 void DEFAULT_CONTAINER_DRAW_FUNCTION(Container *container)
 {
+    if (container->_renderFunction != NULL)
+    {
+        container->_renderFunction(container, NULL);
+    }
     // Draw Polygon
-    Draw_Polygon(container->points, container->pointCount, &container->backgroundColor);
+    Draw_Polygon(container->points, container->pointCount, &container->backgroundColor, container->transform.size.globalScale);
     Draw_PolygonOutline(container->points, container->pointCount, &container->outlineColor, container->outlineWidth);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
@@ -237,7 +296,7 @@ void PRIVATE_DEFAULT_CONTAINER_DRAW_CHILDREN(Container *container)
 void PRIVATE_DEFAULT_CONTAINER_PROCESS_CALLING(Container *container, void *args)
 {
 
-    Position_process(&container->transform.pos);
+    processTransform(&container->transform);
 
     /*
 
@@ -252,6 +311,7 @@ void PRIVATE_DEFAULT_CONTAINER_PROCESS_CALLING(Container *container, void *args)
     }
 
     // Process Children
+    // printf("Container PROCESS Place thingy\n");
     if (container->processChildren && !(container->getChildAmount(container) <= 0))
     {
         container->_processChildren(container, false, NULL);
@@ -269,14 +329,16 @@ void PRIVATE_DEFAULT_CONTAINER_PROCESS_CHILDREN(Container *container, bool argB,
 // Free the container ------------------------------------------------------------------------------------------------------ //
 void PRIVATE_DEFAULT_CONTAINER_FREE(Container *container)
 {
+    free(container->info.name);
     free(container->points);
+    freeHierarchy(&container->hierarchy);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
 // Add node to container -------------------------------------------------------------------------------------------------- //
 void PRIVATE_DEFAULT_CONTAINER_ADD_CHILD(Container *container, Node *node)
 {
-    addChild(&container->hierarchy, node, (void *)&container->transform.pos);
+    addChild(&container->hierarchy, node, (void *)&container->transform.pos, (void *)&container->transform.size.globalScale);
 }
 // ------------------------------------------------------------------------------------------------------------------------- //
 
@@ -353,6 +415,7 @@ void make_VUIE_Container(Container *container)
 
     // --- Hierachy --- //
     // Self Node
+    hierarchy_init(&container->hierarchy);
     container->hierarchy.self = newNode(CONTAINER, container, container->info.ID);
     container->getSelf = PRIVATE_DEFAULT_CONTAINER_GET_SELF;
 
@@ -386,8 +449,9 @@ void make_VUIE_Container(Container *container)
     container->_draw = PRIVATE_DEFAULT_CONTAINER_DRAW_CALLING;
 
     // Draw Itself
-    container->drawSelf = false;
+    container->drawSelf = true;
     container->_drawSelf = DEFAULT_CONTAINER_DRAW_FUNCTION;
+    container->_renderFunction = NULL;
 
     // Draw Children
     container->drawChildren = true;
@@ -436,10 +500,23 @@ void PRIVATE_NODE_CONTAINER_PROCESS(Node *Node, void *args)
     ((Container *)Node->element)->_process((Container *)Node->element, args);
 }
 
-void PRIVATE_NODE_CONTAINER_ADD_PARENT(Node *node, Node *parent, void *pos)
+void PRIVATE_NODE_CONTAINER_ADD_PARENT(Node *node, Node *parent, void *pos, void *scale)
 {
     ((Container *)node->element)->setParent((Container *)node->element, parent);
     Position_setParent(&((Container *)node->element)->transform.pos, (Position *)pos);
+    Size_setParent(&((Container *)node->element)->transform.size, (int *)scale);
+}
+
+NodeFunctions PRIVATE_CONTAINER_NODE_FUNTIONS_INIT()
+{
+    NodeFunctions NodeFunctionsTemp;
+
+    NodeFunctionsTemp.free = PRIVATE_NODE_CONTAINER_FREE;
+    NodeFunctionsTemp.draw = PRIVATE_NODE_CONTAINER_DRAW;
+    NodeFunctionsTemp.process = PRIVATE_NODE_CONTAINER_PROCESS;
+    NodeFunctionsTemp.addParent = PRIVATE_NODE_CONTAINER_ADD_PARENT;
+
+    return NodeFunctionsTemp;
 }
 
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv //

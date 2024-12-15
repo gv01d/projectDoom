@@ -1,231 +1,98 @@
-#include "NodeArray.h"
+
+#include "DataStructures.h"
 /*
     TODO : Make so i can add new structures without changing the base library
     EXAMPLE :
         some int with amount of data structures
         some array with all of the types of functions to each data structure
-
-        typedef struct datastructure
-        {
-            int type;
-            char *name;
-
-            // Add
-            void (*add)(struct Hierarchy *nodeDataStructure, Node *node);
-            // Get
-            int (*getAmount)(struct Hierarchy *nodeDataStructure);
-            Node *(*get)(struct Hierarchy *nodeDataStructure, int index);
-            Node *(*getbyID)(struct Hierarchy *nodeDataStructure, int ID);
-            // Remove
-            int (*remove)(struct Hierarchy *nodeDataStructure, int index);
-            int (*removebyID)(struct Hierarchy *nodeDataStructure, int ID);
-            // Free
-            void (*free)(struct Hierarchy *nodeDataStructure, int index);
-            // Draw
-            void (*callDraw) (struct Hierarchy *nodeDataStructure);
-            void (*callDrawAboveZ) (struct Hierarchy *nodeDataStructure, int Z);
-            void (*callDrawZ) (struct Hierarchy *nodeDataStructure, int Z);
-            void (*callDrawBelowZ) (struct Hierarchy *nodeDataStructure, int Z);
-            void (*drawAll) (struct Hierarchy *nodeDataStructure);
-            // Process
-            void (*callProcess) (struct Hierarchy *nodeDataStructure);
-            void (*processAll) (struct Hierarchy *nodeDataStructure);
-
-        } DataStructure;
-
-        int PRIVATE_DATASTRUCTURE_AMOUNT = 1;
 */
-
-enum DataStructureType
-{
-    ARRAY_TYPE, // 0
-    LIST_TYPE   // 1
-};
 
 typedef struct Hierarchy
 {
     Node *self;
     Node *parent;
 
-    enum DataStructureType type;
-    union
-    {
-        NodeArray array;
-    };
+    int type;
+    void *dataStructure;
 
 } Hierarchy;
-
-int getChildAmount(Hierarchy *nodeDataStructure)
-{
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        return NodeArray_getNodeAmount(&nodeDataStructure->array);
-        break;
-
-    default:
-        break;
-    }
-}
 
 void setParent(Hierarchy *nodeDataStructure, Node *parent)
 {
     nodeDataStructure->parent = parent;
 }
-// Adds a child to the Hierarchy
-void addChild(Hierarchy *nodeDataStructure, Node *node, void *pos)
+void setDataStructure(Hierarchy *nodeDataStructure, int type)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        NodeArray_addNode(&nodeDataStructure->array, node, nodeDataStructure->self, pos);
-        break;
-
-    default:
-        break;
-    }
+    nodeDataStructure->type = type;
+    hierarchy_init(nodeDataStructure);
+}
+// ------------------------------------------------------------------------------------------------------------
+void hierarchy_init(Hierarchy *nodeDataStructure)
+{
+    nodeDataStructure->type = ARRAY_TYPE;
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].init((void *)nodeDataStructure);
+}
+int getChildAmount(Hierarchy *nodeDataStructure)
+{
+    return GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].getAmount(nodeDataStructure->dataStructure);
+}
+// Adds a child to the Hierarchy
+void addChild(Hierarchy *nodeDataStructure, Node *node, void *pos, void *scale)
+{
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].add(nodeDataStructure->dataStructure, node, nodeDataStructure->self, pos, scale);
 }
 // Removes a child from the Hierarchy
 void removeChild(Hierarchy *nodeDataStructure, int index)
 {
-    switch (nodeDataStructure->type)
-
-    {
-    case ARRAY_TYPE:
-        NodeArray_removeNode(&nodeDataStructure->array, index);
-        break;
-
-    default:
-        break;
-    }
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].remove(nodeDataStructure->dataStructure, index);
 }
 // Removes a child from the Hierarchy by ID
 void removeChildbyID(Hierarchy *nodeDataStructure, int ID)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        NodeArray_removeNodebyID(&nodeDataStructure->array, ID);
-        break;
-
-    default:
-        break;
-    }
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].removebyID(nodeDataStructure->dataStructure, ID);
 }
 // Gets a child from the Hierarchy
 Node *getChild(Hierarchy *nodeDataStructure, int index)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        return NodeArray_getNode(&nodeDataStructure->array, index);
-        break;
-
-    default:
-        break;
-    }
+    return GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].get(nodeDataStructure->dataStructure, index);
 }
 // Gets a child from the Hierarchy by ID
 void *getChildbyID(Hierarchy *nodeDataStructure, int ID)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        return NodeArray_getNodebyID(&nodeDataStructure->array, ID);
-        break;
-
-    default:
-        break;
-    }
+    return GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].getbyID(nodeDataStructure->dataStructure, ID);
 }
 // Frees the Hierarchy
-void freeHierarchy(Hierarchy *nodeDataStructure, int index)
+void freeHierarchy(Hierarchy *nodeDataStructure)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        NodeArray_removeAll(&nodeDataStructure->array);
-        break;
-
-    default:
-        break;
-    }
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].removeAll(nodeDataStructure->dataStructure);
 }
 // Draws a child from the Hierarchy
 void callDraw(Hierarchy *nodeDataStructure, int index)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        NodeArray_callDraw(&nodeDataStructure->array, index);
-        break;
-
-    default:
-        break;
-    }
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].callDraw(nodeDataStructure->dataStructure);
 }
 // Draws a child from the Hierarchy by ID
 void callDrawByID(Hierarchy *nodeDataStructure, int ID)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        NodeArray_callDrawByID(&nodeDataStructure->array, ID);
-        break;
-
-    default:
-        break;
-    }
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].callDrawByID(nodeDataStructure->dataStructure, ID);
 }
 // Draws all the Hierarchy
 void drawAll(Hierarchy *nodeDataStructure)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        NodeArray_drawAll(&nodeDataStructure->array);
-        break;
-
-    default:
-        break;
-    }
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].drawAll(nodeDataStructure->dataStructure);
 }
 // Processes a child from the Hierarchy
 void callProcess(Hierarchy *nodeDataStructure, int index, void *args)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        NodeArray_callProcess(&nodeDataStructure->array, index, args);
-        break;
-
-    default:
-        break;
-    }
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].callProcess(nodeDataStructure->dataStructure, index, args);
 }
 // Processes a child from the Hierarchy by ID
 void callProcessByID(Hierarchy *nodeDataStructure, int ID, void *args)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        NodeArray_callProcessByID(&nodeDataStructure->array, ID, args);
-        break;
-
-    default:
-        break;
-    }
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].callProcessByID(nodeDataStructure->dataStructure, ID, args);
 }
 // Processes all the Hierarchy
 void processAll(Hierarchy *nodeDataStructure, bool argB, void **args)
 {
-    switch (nodeDataStructure->type)
-    {
-    case ARRAY_TYPE:
-        NodeArray_processAll(&nodeDataStructure->array, argB, args);
-        break;
-
-    default:
-        break;
-    }
+    GLOBAL_VUIE_DATASTRUCTURES[nodeDataStructure->type].processAll(nodeDataStructure->dataStructure, argB, args);
 }
